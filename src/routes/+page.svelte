@@ -129,30 +129,45 @@
 </script>
 
 <svelte:head>
-    <title>Personal Calendar</title>
+    <title>Personnel Calendar</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </svelte:head>
 
-<main class="bg-gray-100 min-h-screen">
+<main class="bg-slate-50 min-h-screen">
     <div class="flex h-screen">
         <!-- Main Content Area -->
-        <div class="flex-1 p-4 pr-0 overflow-hidden">
-            <div class="h-full flex flex-col">
-                <h1 class="text-3xl font-bold text-gray-800 mb-6">Personalplanung 2025</h1>
-                
-                <div class="flex-1 min-h-0">
-                    <Calendar 
-                        {startDate}
-                        {events}
-                        {persons}
-                        highlight={enableHighlight}
-                    />
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-slate-900">Personnel Planning</h1>
+                        <p class="text-sm text-slate-500 mt-1">2025 Calendar Overview</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm text-slate-500">
+                            {persons.length} team members
+                        </div>
+                        <div class="text-sm text-slate-500">
+                            {events.length} scheduled events
+                        </div>
+                    </div>
                 </div>
+            </header>
+            
+            <!-- Calendar Content -->
+            <div class="flex-1 p-6 overflow-hidden">
+                <Calendar 
+                    {startDate}
+                    {events}
+                    {persons}
+                    highlight={enableHighlight}
+                />
             </div>
         </div>
         
         <!-- Fixed Right Sidebar for Settings -->
-        <div class="w-80 flex-shrink-0">
+        <div class="w-80 flex-shrink-0 shadow-sm">
             <Settings bind:enableHighlight />
         </div>
     </div>

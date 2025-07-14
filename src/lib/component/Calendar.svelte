@@ -126,10 +126,10 @@
 
 <style>
     :root {
-        --row-height: 55px;
-        --header-height: 80px;
-        --names-width: 220px;
-        --day-width: 50px;
+        --row-height: 52px;
+        --header-height: 72px;
+        --names-width: 240px;
+        --day-width: 48px;
     }
 
     .scheduler-container {
@@ -140,6 +140,10 @@
         grid-template-areas:
             "corner header"
             "names  grid";
+        border: 1px solid hsl(214.3 31.8% 91.4%);
+        border-radius: 0.5rem;
+        overflow: hidden;
+        background: hsl(0 0% 100%);
     }
     .scheduler-corner { grid-area: corner; }
     .scheduler-header-container { grid-area: header; }
@@ -147,91 +151,109 @@
     .scheduler-grid-container { grid-area: grid; }
     
     .weekend-highlight {
-        background-color: #f8fafc;
+        background-color: hsl(210 40% 98%);
     }
 
     .header-highlight {
-        background-color: rgba(59, 130, 246, 0.15) !important;
+        background-color: hsl(221.2 83.2% 53.3% / 0.08) !important;
+    }
+
+    .today-highlight {
+        background-color: hsl(221.2 83.2% 53.3% / 0.12);
+    }
+
+    .person-row:hover {
+        background-color: hsl(210 40% 98%);
+    }
+
+    .day-cell {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .day-cell:hover {
+        background-color: hsl(210 40% 96%);
     }
 </style>
 
-<div class="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden h-full">
-    <div class="scheduler-container">
-        <!-- Top-Left Corner -->
-        <div class="scheduler-corner border-r border-b border-gray-200 flex items-center justify-center bg-gray-50">
-            <h3 class="text-lg font-semibold text-gray-800">Personal</h3>
-        </div>
+<div class="scheduler-container shadow-sm">
+    <!-- Top-Left Corner -->
+    <div class="scheduler-corner border-r border-b bg-slate-50/50 flex items-center justify-center">
+        <h3 class="text-sm font-medium text-slate-900">Personnel</h3>
+    </div>
 
-        <!-- Timeline Header -->
-        <div bind:this={headerRef} class="scheduler-header-container bg-gray-50 border-b border-gray-200 overflow-hidden">
-            <div class="relative" style="width: {days.length * dayWidth}px; height: 100%">
-                <!-- Months Row -->
-                {#each months as month}
-                    <div class="absolute top-0 h-8 flex items-center justify-center border-r border-gray-200"
-                         style="left: {month.left}px; width: {month.width}px">
-                        <span class="font-semibold text-sm text-gray-600">{month.name}</span>
-                    </div>
-                {/each}
-                <!-- Days Row -->
-                {#each days as day, index}
-                    <div class="absolute top-8 text-center text-xs h-12 pt-1"
-                         class:font-bold={day.isToday}
-                         class:text-blue-600={day.isToday}
-                         class:bg-blue-100={day.isToday}
-                         class:rounded-t-lg={day.isToday}
-                         class:header-highlight={highlight && hoveredCell.dayIndex === index}
-                         style="left: {index * dayWidth}px; width: {dayWidth}px">
-                        <span class="text-gray-500">{day.name.slice(0, 1)}</span>
-                        <p class="text-gray-800 font-medium">{day.date.split('.')[0]}</p>
-                    </div>
-                {/each}
-            </div>
+    <!-- Timeline Header -->
+    <div bind:this={headerRef} class="scheduler-header-container bg-slate-50/50 border-b overflow-hidden">
+        <div class="relative" style="width: {days.length * dayWidth}px; height: 100%">
+            <!-- Months Row -->
+            {#each months as month}
+                <div class="absolute top-0 h-8 flex items-center justify-center border-r border-slate-200"
+                     style="left: {month.left}px; width: {month.width}px">
+                    <span class="font-medium text-xs text-slate-600 tracking-wide">{month.name}</span>
+                </div>
+            {/each}
+            <!-- Days Row -->
+            {#each days as day, index}
+                <div class="absolute top-8 text-center text-xs h-16 pt-2 flex flex-col items-center justify-center border-r border-slate-100"
+                     class:font-semibold={day.isToday}
+                     class:text-blue-600={day.isToday}
+                     class:today-highlight={day.isToday}
+                     class:header-highlight={highlight && hoveredCell.dayIndex === index}
+                     style="left: {index * dayWidth}px; width: {dayWidth}px">
+                    <span class="text-slate-400 text-[10px] uppercase tracking-wider mb-1">{day.name.slice(0, 2)}</span>
+                    <span class="text-slate-900 font-medium text-sm">{day.date.split('.')[0]}</span>
+                </div>
+            {/each}
         </div>
+    </div>
 
-        <!-- Names Column -->
-        <div bind:this={namesRef} class="scheduler-names-container bg-white border-r border-gray-200 overflow-hidden">
-            <div class="relative">
-                {#each persons as person, personIndex}
-                    <div class="flex items-center px-4 border-b border-gray-100" 
-                         class:header-highlight={highlight && hoveredCell.personIndex === personIndex}
-                         style="height: {rowHeight}px">
+    <!-- Names Column -->
+    <div bind:this={namesRef} class="scheduler-names-container bg-white border-r overflow-hidden">
+        <div class="relative">
+            {#each persons as person, personIndex}
+                <div class="person-row flex items-center px-4 py-3 border-b border-slate-100" 
+                     class:header-highlight={highlight && hoveredCell.personIndex === personIndex}
+                     style="height: {rowHeight}px">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                            <span class="text-xs font-medium text-slate-600">{person.name.split(' ').map(n => n[0]).join('')}</span>
+                        </div>
                         <div>
-                            <p class="font-semibold text-sm text-gray-800">{person.name}</p>
-                            <p class="text-xs text-gray-500">{person.title}</p>
+                            <p class="font-medium text-sm text-slate-900 leading-none">{person.name}</p>
+                            <p class="text-xs text-slate-500 mt-1">{person.title}</p>
                         </div>
                     </div>
-                {/each}
-            </div>
+                </div>
+            {/each}
         </div>
-        
-        <!-- Main Grid and Events -->
-        <div bind:this={gridRef} on:scroll={syncScroll} class="scheduler-grid-container overflow-auto">
-            <div class="relative" style="width: {days.length * dayWidth}px; height: {persons.length * rowHeight}px">
-                <!-- Grid Cells -->
-                {#each days as day, dayIndex}
-                    {#each persons as person, personIndex}
-                        <div class="absolute border-r border-b border-gray-100 cursor-pointer"
-                             class:weekend-highlight={day.isWeekend}
-                             on:mouseenter={() => handleCellHover(dayIndex, personIndex)}
-                             on:mouseleave={handleCellLeave}
-                             style="left: {dayIndex * dayWidth}px; top: {personIndex * rowHeight}px; width: {dayWidth}px; height: {rowHeight}px">
-                            {#if day.isToday}
-                                <div class="w-full h-full bg-blue-500/10"></div>
-                            {/if}
-                        </div>
-                    {/each}
-                {/each}
-
-                <!-- Events -->
-                {#each processedEvents as event}
-                    <div class="absolute flex items-center justify-center p-1.5 pointer-events-none"
-                         style={getEventStyle(event)}>
-                        <div class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-md hover:opacity-80 transition-opacity {event.color}">
-                            <span class="truncate">{event.name}</span>
-                        </div>
+    </div>
+    
+    <!-- Main Grid and Events -->
+    <div bind:this={gridRef} on:scroll={syncScroll} class="scheduler-grid-container overflow-auto bg-white">
+        <div class="relative" style="width: {days.length * dayWidth}px; height: {persons.length * rowHeight}px">
+            <!-- Grid Cells -->
+            {#each days as day, dayIndex}
+                {#each persons as person, personIndex}
+                    <div class="day-cell absolute border-r border-b border-slate-50 cursor-pointer"
+                         class:weekend-highlight={day.isWeekend}
+                         on:mouseenter={() => handleCellHover(dayIndex, personIndex)}
+                         on:mouseleave={handleCellLeave}
+                         style="left: {dayIndex * dayWidth}px; top: {personIndex * rowHeight}px; width: {dayWidth}px; height: {rowHeight}px">
+                        {#if day.isToday}
+                            <div class="w-full h-full today-highlight"></div>
+                        {/if}
                     </div>
                 {/each}
-            </div>
+            {/each}
+
+            <!-- Events -->
+            {#each processedEvents as event}
+                <div class="absolute flex items-center justify-center p-1 pointer-events-none"
+                     style={getEventStyle(event)}>
+                    <div class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20">
+                        <span class="truncate font-medium">{event.name}</span>
+                    </div>
+                </div>
+            {/each}
         </div>
     </div>
 </div>
