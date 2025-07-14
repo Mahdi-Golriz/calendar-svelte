@@ -134,10 +134,33 @@
     let goToTodayTrigger = 0;
     
     /** @type {string} */
-    let locale = 'de-DE';
+    let locale = 'en-US'; // Changed default to English
+    
+    // Language mapping for display
+    const languageNames = {
+        'de-DE': 'Deutsch',
+        'en-US': 'English', 
+        'es-ES': 'Español',
+        'fr-FR': 'Français'
+    };
+    
+    /** @type {string|null} */
+    let selectedDate = null;
 
     function handleGoToToday() {
         goToTodayTrigger += 1; // Increment to trigger reactive update
+    }
+
+    function handleDateSelect(event) {
+        const { date } = event.detail;
+        console.log('Date selected:', date);
+        // Add your custom logic here for when a date is selected
+    }
+
+    function handleDateUnselect(event) {
+        const { date } = event.detail;
+        console.log('Date unselected:', date);
+        // Add your custom logic here for when a date is deselected
     }
 </script>
 
@@ -164,6 +187,19 @@
                         <div class="text-sm text-slate-500">
                             {events.length} scheduled events
                         </div>
+                        <div class="text-sm text-slate-500">
+                            {languageNames[locale]}
+                        </div>
+                        {#if selectedDate}
+                            <div class="text-sm text-blue-600 font-medium">
+                                Selected: {new Intl.DateTimeFormat(locale, { 
+                                    weekday: 'short', 
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                }).format(new Date(selectedDate))}
+                            </div>
+                        {/if}
                     </div>
                 </div>
             </header>
@@ -177,7 +213,10 @@
                     highlight={enableHighlight}
                     {goToTodayTrigger}
                     {showWeekends}
-                    locale={locale}
+                    {locale}
+                    bind:selectedDate
+                    on:selectDate={handleDateSelect}
+                    on:unselectDate={handleDateUnselect}
                 />
             </div>
         </div>
@@ -189,6 +228,7 @@
                 bind:showWeekends
                 bind:locale
                 bind:persons
+                bind:selectedDate
                 on:goToToday={handleGoToToday}
             />
         </div>

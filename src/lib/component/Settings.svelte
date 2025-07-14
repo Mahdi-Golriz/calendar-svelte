@@ -16,10 +16,20 @@
     /** @type {Array<{id: number, name: string, title: string}>} */
     export let persons = [];
     
+    /** @type {string|null} */
+    export let selectedDate = null;
+    
     let compactView = false;
     let newPersonName = '';
     let newPersonTitle = '';
     let showAddForm = false;
+    
+    const availableLanguages = [
+        { code: 'de-DE', name: 'Deutsch' },
+        { code: 'en-US', name: 'English' },
+        { code: 'es-ES', name: 'Español' },
+        { code: 'fr-FR', name: 'Français' }
+    ];
     
     function handleGoToToday() {
         dispatch('goToToday');
@@ -51,6 +61,20 @@
             newPersonTitle = '';
         }
     }
+    
+    function clearSelectedDate() {
+        selectedDate = null;
+    }
+    
+    function formatDateForDisplay(isoDate) {
+        const date = new Date(isoDate);
+        return new Intl.DateTimeFormat(locale, { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        }).format(date);
+    }
 </script>
 
 <div class="h-full bg-white border-l border-slate-200">
@@ -61,6 +85,25 @@
         </div>
         
         <div class="space-y-6">
+            <!-- Selected Date -->
+            {#if selectedDate}
+                <div class="space-y-4 border-b border-slate-100 pb-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-medium text-slate-900">Selected Date</h3>
+                        <button 
+                            on:click={clearSelectedDate}
+                            class="text-xs text-red-600 hover:text-red-700 font-medium"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                    
+                    <div class="px-3 py-2 bg-blue-50 text-blue-700 rounded-md text-sm font-medium">
+                        {formatDateForDisplay(selectedDate)}
+                    </div>
+                </div>
+            {/if}
+
             <!-- Team Management -->
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -117,6 +160,19 @@
                 <div>
                     <h3 class="text-sm font-medium text-slate-900 mb-3">Display</h3>
                     <div class="space-y-3">
+                        <!-- Language Selection -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-700">Language</span>
+                            <select 
+                                bind:value={locale}
+                                class="text-sm border border-slate-200 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                {#each availableLanguages as lang}
+                                    <option value={lang.code}>{lang.name}</option>
+                                {/each}
+                            </select>
+                        </div>
+                        
                         <label class="flex items-center justify-between">
                             <span class="text-sm text-slate-700">Header highlighting</span>
                             <input 

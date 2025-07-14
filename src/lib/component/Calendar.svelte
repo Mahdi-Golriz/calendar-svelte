@@ -1,5 +1,8 @@
 <script>
     import { onMount, tick } from "svelte";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     /** @type {Date} */
     export let startDate = new Date();
@@ -21,6 +24,9 @@
 
     /** @type {string} */
     export let locale = "de-DE";
+
+    /** @type {string|null} */
+    export let selectedDate = null;
 
     let days = [];
     let months = [];
@@ -203,6 +209,26 @@
         }
     }
 
+    function handleDateClick(dayIso) {
+        if (selectedDate === dayIso) {
+            // Deselect current date
+            selectedDate = null;
+            dispatch('unselectDate', { date: dayIso });
+        } else {
+            // Select new date (auto-deselects previous)
+            const previousDate = selectedDate;
+            selectedDate = dayIso;
+            
+            // Dispatch unselect for previous date if it existed
+            if (previousDate) {
+                dispatch('unselectDate', { date: previousDate });
+            }
+            
+            // Dispatch select for new date
+            dispatch('selectDate', { date: dayIso });
+        }
+    }
+
     onMount(async () => {
         init();
         await tick();
@@ -242,13 +268,18 @@
             <!-- Days Row -->
             {#each visibleDays as day, index}
                 <div
-                    class="absolute top-8 text-center text-xs h-16 pt-2 flex flex-col items-center justify-center border-r border-slate-100"
+                    class="absolute top-8 text-center text-xs h-16 pt-2 flex flex-col items-center justify-center border-r border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors"
                     class:font-semibold={day.isToday}
                     class:text-blue-600={day.isToday}
                     class:today-highlight={day.isToday}
+                    class:selected-date={selectedDate === day.iso}
                     class:header-highlight={highlight &&
                         hoveredCell.dayIndex === index}
                     style="left: {index * dayWidth}px; width: {dayWidth}px"
+                    on:click={() => handleDateClick(day.iso)}
+                    role="button"
+                    tabindex="0"
+                    on:keydown={(e) => e.key === 'Enter' && handleDateClick(day.iso)}
                 >
                     <span
                         class="text-slate-400 text-[10px] uppercase tracking-wider mb-1"
@@ -318,9 +349,14 @@
                 {#each persons as person, personIndex}
                     <div
                         class="day-cell absolute border-r border-b border-slate-50 cursor-pointer"
+                        class:selected-date-cell={selectedDate === day.iso}
                         on:mouseenter={() =>
                             handleCellHover(dayIndex, personIndex)}
                         on:mouseleave={handleCellLeave}
+                        on:click={() => handleDateClick(day.iso)}
+                        role="button"
+                        tabindex="0"
+                        on:keydown={(e) => e.key === 'Enter' && handleDateClick(day.iso)}
                         style="left: {dayIndex *
                             dayWidth}px; top: {personIndex *
                             rowHeight}px; width: {dayWidth}px; height: {rowHeight}px"
@@ -397,6 +433,17 @@
 
     .person-row:hover {
         background-color: hsl(210 40% 98%);
+    }
+
+    .selected-date {
+        background-color: hsl(221.2 83.2% 53.3% / 0.15) !important;
+        border: 2px solid hsl(221.2 83.2% 53.3%);
+        color: hsl(221.2 83.2% 53.3%) !important;
+        font-weight: 600 !important;
+    }
+
+    .selected-date-cell {
+        background-color: hsl(221.2 83.2% 53.3% / 0.08);
     }
 
     .day-cell {
