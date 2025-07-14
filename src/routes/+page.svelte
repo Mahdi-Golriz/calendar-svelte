@@ -242,7 +242,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </svelte:head>
 
-<main class="bg-slate-50 min-h-screen">
+<main>
     <div class="flex h-screen">
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden">
@@ -400,3 +400,16 @@
         </div>
     {/if}
 </main>
+
+<footer class="absolute bottom-0 left-0 w-full text-center text-sm text-slate-500 ">
+        © 2025 mehdi. All rights reserved.
+</footer>
+
+
+
+<style>
+    main{
+        @apply bg-slate-50;
+        height: calc(100vh - 40px); /* Adjust for header height */
+    }
+</style>
