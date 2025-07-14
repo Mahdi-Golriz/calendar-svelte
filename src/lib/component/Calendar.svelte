@@ -35,15 +35,7 @@
     const namesWidth = 220;
     const dayWidth = 50;
 
-    $: processedEvents = events.map((event) => ({
-        ...event,
-        personId: event.persons?.[0] || null, // Use first person for positioning
-        start: event.startDate,
-        end: event.endDate,
-        name: event.title,
-        color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
-    }));
-
+    $: processedEvents = calculateEvents(events, persons, showWeekends);
     $: visibleDays = showWeekends ? days : days.filter((day) => !day.isWeekend);
     $: visibleMonths = showWeekends ? months : calculateVisibleMonths();
 
@@ -57,6 +49,19 @@
         scrollToToday();
     }
 
+    function calculateEvents(events, persons, showWeekends) {
+        // Process events to include person names and handle weekend visibility
+        return events.map((event) => ({
+            ...event,
+            personId: event.persons?.[0] || null, // Use first person for positioning
+            start: event.startDate,
+            end: event.endDate,
+            name: event.title,
+            color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
+        }));
+    }
+
+    
     function calculateVisibleMonths() {
         if (showWeekends) return months;
 
@@ -331,7 +336,7 @@
             {#each processedEvents as event}
                 <div
                     class="absolute flex items-center justify-center p-1 pointer-events-none"
-                    style={getEventStyle(event,showWeekends)}
+                    style={getEventStyle(event, showWeekends)}
                 >
                     <div
                         class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20"

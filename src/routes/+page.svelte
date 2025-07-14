@@ -3,7 +3,7 @@
     import Settings from '$lib/component/Settings.svelte';
 
     // Sample persons data
-    const persons = [
+    let persons = [
         { id: 1, name: 'Max Mustermann', title: 'Projektmanager' },
         { id: 2, name: 'Erika Mustermann', title: 'Entwicklerin' },
         { id: 3, name: 'John Doe', title: 'Designer' },
@@ -188,6 +188,7 @@
                 bind:enableHighlight 
                 bind:showWeekends
                 bind:locale
+                bind:persons
                 on:goToToday={handleGoToToday}
             />
         </div>
