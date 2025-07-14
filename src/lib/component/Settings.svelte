@@ -1,6 +1,7 @@
 <script>
     import { createEventDispatcher } from 'svelte';
     import PersonSmallSettingsItem from './PersonSmallSettingsItem.svelte';
+    import AddEventPopup from './AddEventPopup.svelte';
     
     const dispatch = createEventDispatcher();
     
@@ -9,6 +10,9 @@
     
     /** @type {boolean} */
     export let showWeekends = true;
+    
+    /** @type {boolean} */
+    export let highlightWeekends = true;
     
     /** @type {string} */
     export let locale = 'de-DE';
@@ -19,10 +23,13 @@
     /** @type {string|null} */
     export let selectedDate = null;
     
-    let compactView = false;
+    /** @type {Array<Object>} */
+    export let events = [];
+    
     let newPersonName = '';
     let newPersonTitle = '';
     let showAddForm = false;
+    let showEventPopup = false;
     
     const availableLanguages = [
         { code: 'de-DE', name: 'Deutsch' },
@@ -75,6 +82,15 @@
             day: 'numeric' 
         }).format(date);
     }
+    
+    function handleAddEvent(event) {
+        const newEvent = event.detail;
+        dispatch('addEvent', newEvent);
+    }
+    
+    function toggleEventPopup() {
+        showEventPopup = !showEventPopup;
+    }
 </script>
 
 <div class="h-full bg-white border-l border-slate-200">
@@ -103,6 +119,23 @@
                     </div>
                 </div>
             {/if}
+
+            <!-- Event Management -->
+            <div class="space-y-4 border-t border-slate-100 pt-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-medium text-slate-900">Events</h3>
+                    <button 
+                        on:click={toggleEventPopup}
+                        class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                        Add Event
+                    </button>
+                </div>
+                
+                <div class="text-xs text-slate-500">
+                    {events.length} scheduled events
+                </div>
+            </div>
 
             <!-- Team Management -->
             <div class="space-y-4">
@@ -192,13 +225,14 @@
                         </label>
                         
                         <label class="flex items-center justify-between">
-                            <span class="text-sm text-slate-700">Compact view</span>
+                            <span class="text-sm text-slate-700">Highlight weekends</span>
                             <input 
                                 type="checkbox" 
-                                bind:checked={compactView} 
+                                bind:checked={highlightWeekends} 
                                 class="h-4 w-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
                             >
                         </label>
+                        
                     </div>
                 </div>
                 
@@ -209,12 +243,6 @@
                             on:click={handleGoToToday}
                             class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
                             Go to today
-                        </button>
-                        <button class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
-                            Export calendar
-                        </button>
-                        <button class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
-                            Print view
                         </button>
                     </div>
                 </div>
@@ -234,3 +262,9 @@
         </div>
     </div>
 </div>
+
+<AddEventPopup 
+    bind:isOpen={showEventPopup}
+    {persons}
+    on:addEvent={handleAddEvent}
+/>

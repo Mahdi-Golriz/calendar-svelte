@@ -28,6 +28,9 @@
     /** @type {string|null} */
     export let selectedDate = null;
 
+    /** @type {boolean} */
+    export let highlightWeekends = false;
+
     let days = [];
     let months = [];
     let headerRef;
@@ -273,6 +276,7 @@
                     class:text-blue-600={day.isToday}
                     class:today-highlight={day.isToday}
                     class:selected-date={selectedDate === day.iso}
+                    class:weekend-highlight={highlightWeekends && day.isWeekend}
                     class:header-highlight={highlight &&
                         hoveredCell.dayIndex === index}
                     style="left: {index * dayWidth}px; width: {dayWidth}px"
@@ -350,6 +354,7 @@
                     <div
                         class="day-cell absolute border-r border-b border-slate-50 cursor-pointer"
                         class:selected-date-cell={selectedDate === day.iso}
+                        class:weekend-highlight={highlightWeekends && day.isWeekend}
                         on:mouseenter={() =>
                             handleCellHover(dayIndex, personIndex)}
                         on:mouseleave={handleCellLeave}
@@ -420,7 +425,7 @@
     }
 
     .weekend-highlight {
-        background-color: hsl(210 40% 98%);
+        background-color: hsl(210 40% 98%) !important;
     }
 
     .header-highlight {

@@ -19,7 +19,7 @@
     ];
 
     // Sample events data
-    const events = [
+    let events = [
         { 
             id: 1, 
             startDate: '2025-01-15', 
@@ -130,6 +130,9 @@
     // Weekend display option
     let showWeekends = true;
     
+    // Weekend highlighting option
+    let highlightWeekends = false;
+    
     // Navigation trigger for calendar
     let goToTodayTrigger = 0;
     
@@ -161,6 +164,11 @@
         const { date } = event.detail;
         console.log('Date unselected:', date);
         // Add your custom logic here for when a date is deselected
+    }
+
+    function handleAddEvent(event) {
+        const newEvent = event.detail;
+        events = [...events, newEvent];
     }
 </script>
 
@@ -213,6 +221,7 @@
                     highlight={enableHighlight}
                     {goToTodayTrigger}
                     {showWeekends}
+                    {highlightWeekends}
                     {locale}
                     bind:selectedDate
                     on:selectDate={handleDateSelect}
@@ -226,10 +235,13 @@
             <Settings 
                 bind:enableHighlight 
                 bind:showWeekends
+                bind:highlightWeekends
                 bind:locale
                 bind:persons
                 bind:selectedDate
+                {events}
                 on:goToToday={handleGoToToday}
+                on:addEvent={handleAddEvent}
             />
         </div>
     </div>
