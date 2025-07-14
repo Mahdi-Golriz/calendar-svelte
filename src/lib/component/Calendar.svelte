@@ -134,7 +134,7 @@
 
     .scheduler-container {
         display: grid;
-        height: 85vh;
+        height: 100%;
         grid-template-columns: var(--names-width) 1fr;
         grid-template-rows: var(--header-height) 1fr;
         grid-template-areas:
@@ -155,7 +155,7 @@
     }
 </style>
 
-<div class="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+<div class="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden h-full">
     <div class="scheduler-container">
         <!-- Top-Left Corner -->
         <div class="scheduler-corner border-r border-b border-gray-200 flex items-center justify-center bg-gray-50">

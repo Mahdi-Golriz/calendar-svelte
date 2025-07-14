@@ -1,5 +1,6 @@
 <script>
     import Calendar from '$lib/component/Calendar.svelte';
+    import Settings from '$lib/component/Settings.svelte';
 
     // Sample persons data
     const persons = [
@@ -132,22 +133,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </svelte:head>
 
-<main class="p-4 bg-gray-100 min-h-screen">
-    <div class="max-w-7xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Personalplanung 2025</h1>
-        
-        <div class="mb-4">
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" bind:checked={enableHighlight} class="form-checkbox">
-                <span class="text-gray-700">Enable header highlighting on hover</span>
-            </label>
+<main class="bg-gray-100 min-h-screen">
+    <div class="flex h-screen">
+        <!-- Main Content Area -->
+        <div class="flex-1 p-4 pr-0 overflow-hidden">
+            <div class="h-full flex flex-col">
+                <h1 class="text-3xl font-bold text-gray-800 mb-6">Personalplanung 2025</h1>
+                
+                <div class="flex-1 min-h-0">
+                    <Calendar 
+                        {startDate}
+                        {events}
+                        {persons}
+                        highlight={enableHighlight}
+                    />
+                </div>
+            </div>
         </div>
         
-        <Calendar 
-            {startDate}
-            {events}
-            {persons}
-            highlight={enableHighlight}
-        />
+        <!-- Fixed Right Sidebar for Settings -->
+        <div class="w-80 flex-shrink-0">
+            <Settings bind:enableHighlight />
+        </div>
     </div>
 </main>
