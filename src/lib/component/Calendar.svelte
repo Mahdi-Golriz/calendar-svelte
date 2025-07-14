@@ -150,6 +150,8 @@
         const startIndex = visibleDays.findIndex(d => d.iso === event.start);
         const endIndex = visibleDays.findIndex(d => d.iso === event.end);
 
+        console.log('getEventStyle', JSON.stringify({ event, personIndex, startIndex, endIndex }));
+
         if (personIndex === -1 || startIndex === -1 || endIndex === -1) return 'display: none;';
 
         const top = personIndex * rowHeight;
@@ -178,61 +180,6 @@
         scrollToToday();
     });
 </script>
-
-<style>
-    :root {
-        --row-height: 52px;
-        --header-height: 97px;
-        --names-width: 240px;
-        --day-width: 48px;
-    }
-
-    .scheduler-container {
-        display: grid;
-        height: 100%;
-        grid-template-columns: var(--names-width) 1fr;
-        grid-template-rows: var(--header-height) 1fr;
-        grid-template-areas:
-            "corner header"
-            "names  grid";
-        border: 1px solid hsl(214.3 31.8% 91.4%);
-        border-radius: 0.5rem;
-        overflow: hidden;
-        background: hsl(0 0% 100%);
-    }
-    .scheduler-corner { grid-area: corner; }
-    .scheduler-header-container { grid-area: header; }
-    .scheduler-names-container { grid-area: names; }
-    .scheduler-grid-container { grid-area: grid; }
-    
-    .weekend-highlight {
-        background-color: hsl(210 40% 98%);
-    }
-
-    .header-highlight {
-        background-color: hsl(221.2 83.2% 53.3% / 0.08) !important;
-    }
-
-    .today-highlight {
-        background-color: hsl(221.2 83.2% 53.3% / 0.12);
-    }
-
-    .person-row:hover {
-        background-color: hsl(210 40% 98%);
-    }
-
-    .day-cell {
-        transition: background-color 0.15s ease-in-out;
-    }
-
-    .day-cell:hover {
-        background-color: hsl(210 40% 96%);
-    }
-
-    .scheduler-grid-container {
-        scroll-behavior: smooth;
-    }
-</style>
 
 <div class="scheduler-container shadow-sm">
     <!-- Top-Left Corner -->
@@ -315,3 +262,60 @@
         </div>
     </div>
 </div>
+
+
+
+<style>
+    :root {
+        --row-height: 52px;
+        --header-height: 97px;
+        --names-width: 240px;
+        --day-width: 48px;
+    }
+
+    .scheduler-container {
+        display: grid;
+        height: 100%;
+        grid-template-columns: var(--names-width) 1fr;
+        grid-template-rows: var(--header-height) 1fr;
+        grid-template-areas:
+            "corner header"
+            "names  grid";
+        border: 1px solid hsl(214.3 31.8% 91.4%);
+        border-radius: 0.5rem;
+        overflow: hidden;
+        background: hsl(0 0% 100%);
+    }
+    .scheduler-corner { grid-area: corner; }
+    .scheduler-header-container { grid-area: header; }
+    .scheduler-names-container { grid-area: names; }
+    .scheduler-grid-container { grid-area: grid; }
+    
+    .weekend-highlight {
+        background-color: hsl(210 40% 98%);
+    }
+
+    .header-highlight {
+        background-color: hsl(221.2 83.2% 53.3% / 0.08) !important;
+    }
+
+    .today-highlight {
+        background-color: hsl(221.2 83.2% 53.3% / 0.12);
+    }
+
+    .person-row:hover {
+        background-color: hsl(210 40% 98%);
+    }
+
+    .day-cell {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .day-cell:hover {
+        background-color: hsl(210 40% 96%);
+    }
+
+    .scheduler-grid-container {
+        scroll-behavior: smooth;
+    }
+</style>
