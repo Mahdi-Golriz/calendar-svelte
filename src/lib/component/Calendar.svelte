@@ -1,4 +1,5 @@
 <script>
+    import PeopleIcon from "$lib/icons/PeopleIcon.svelte";
     import { onMount, tick } from "svelte";
     import { createEventDispatcher } from "svelte";
 
@@ -34,6 +35,9 @@
     /** @type {Object|null} */
     export let selectedEvent = null;
 
+    /** @type {boolean} */
+    export let shortenPersonnelCol = false;
+
     let days = [];
     let months = [];
     let headerRef;
@@ -45,11 +49,13 @@
     const rowHeight = 55;
     const headerHeight = 60;
     const namesWidth = 220;
+    const namesWidthShort = 60; // Shortened width for mobile
     const dayWidth = 50;
 
     $: processedEvents = calculateEvents(events, persons, showWeekends);
     $: visibleDays = showWeekends ? days : days.filter((day) => !day.isWeekend);
     $: visibleMonths = showWeekends ? months : calculateVisibleMonths();
+    $: actualNamesWidth = shortenPersonnelCol ? namesWidthShort : namesWidth;
 
     // re-init when locale changes
     $: if (startDate || locale) {
@@ -279,12 +285,16 @@
     });
 </script>
 
-<div class="scheduler-container shadow-sm">
+<div class="scheduler-container shadow-sm" style="grid-template-columns: {actualNamesWidth}px 1fr;">
     <!-- Top-Left Corner -->
     <div
         class="scheduler-corner border-r border-b bg-slate-50/50 flex items-center justify-center"
     >
-        <h3 class="text-sm font-medium text-slate-900">Personnel</h3>
+        {#if shortenPersonnelCol}
+            <PeopleIcon />
+        {:else}
+            <h3 class="text-sm font-medium text-slate-900">Personnel</h3>
+        {/if}
     </div>
 
     <!-- Timeline Header -->
@@ -341,18 +351,26 @@
     <div
         bind:this={namesRef}
         class="scheduler-names-container bg-white border-r overflow-hidden"
+        style="width: {actualNamesWidth}px;"
     >
         <div class="relative">
             {#each persons as person, personIndex}
                 <div
-                    class="person-row flex items-center px-4 py-3 border-b border-slate-100"
+                    class="person-row flex items-center border-b border-slate-100"
+                    class:px-4={!shortenPersonnelCol}
+                    class:px-2={shortenPersonnelCol}
+                    class:py-3={!shortenPersonnelCol}
+                    class:py-2={shortenPersonnelCol}
+                    class:justify-center={shortenPersonnelCol}
                     class:header-highlight={highlight &&
                         hoveredCell.personIndex === personIndex}
                     style="height: {rowHeight}px"
+                    title={shortenPersonnelCol ? `${person.name} - ${person.title}` : ''}
                 >
-                    <div class="flex items-center space-x-3">
+                    {#if shortenPersonnelCol}
+                        <!-- Shortened view - only avatar -->
                         <div
-                            class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                            class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0"
                         >
                             <span class="text-xs font-medium text-slate-600"
                                 >{person.name
@@ -361,17 +379,31 @@
                                     .join("")}</span
                             >
                         </div>
-                        <div>
-                            <p
-                                class="font-medium text-sm text-slate-900 leading-none"
+                    {:else}
+                        <!-- Full view - avatar and text -->
+                        <div class="flex items-center space-x-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0"
                             >
-                                {person.name}
-                            </p>
-                            <p class="text-xs text-slate-500 mt-1">
-                                {person.title}
-                            </p>
+                                <span class="text-xs font-medium text-slate-600"
+                                    >{person.name
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")}</span
+                                >
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p
+                                    class="font-medium text-sm text-slate-900 leading-none truncate"
+                                >
+                                    {person.name}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1 truncate">
+                                    {person.title}
+                                </p>
+                            </div>
                         </div>
-                    </div>
+                    {/if}
                 </div>
             {/each}
         </div>
@@ -444,13 +476,14 @@
         --row-height: 52px;
         --header-height: 97px;
         --names-width: 240px;
+        --names-width-short: 60px;
         --day-width: 48px;
     }
 
     .scheduler-container {
         display: grid;
         height: 100%;
-        grid-template-columns: var(--names-width) 1fr;
+        /* grid-template-columns is now set dynamically via style attribute */
         grid-template-rows: var(--header-height) 1fr;
         grid-template-areas:
             "corner header"

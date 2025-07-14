@@ -1,6 +1,7 @@
 <script>
     import Calendar from '$lib/component/Calendar.svelte';
     import Settings from '$lib/component/Settings.svelte';
+    import { onMount } from 'svelte';
 
     // Sample persons data
     let persons = [
@@ -153,6 +154,42 @@
     // Reference to Settings component to trigger event details popup
     let settingsComponent;
 
+    // Mobile menu state
+    let mobileMenuOpen = false;
+    let isMobile = false;
+    let shortenPersonnelCol = false;
+
+    // Detect mobile screen size and auto-enable compact view
+    function checkMobile() {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth < 768; // md breakpoint
+        
+        // Auto-enable compact view on mobile if not manually set
+        if (isMobile && !wasMobile) {
+            shortenPersonnelCol = true;
+        } else if (!isMobile && wasMobile && shortenPersonnelCol) {
+            // Auto-disable when moving to desktop, but only if it was auto-enabled
+            shortenPersonnelCol = false;
+        }
+    }
+
+    onMount(() => {
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => {
+            window.removeEventListener('resize', checkMobile);
+        };
+    });
+
+    function toggleMobileMenu() {
+        mobileMenuOpen = !mobileMenuOpen;
+    }
+
+    function closeMobileMenu() {
+        mobileMenuOpen = false;
+    }
+
     function handleGoToToday() {
         goToTodayTrigger += 1; // Increment to trigger reactive update
     }
@@ -200,38 +237,56 @@
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Header -->
-            <header class="bg-white border-b border-slate-200 px-6 py-4">
+            <header class="bg-white border-b border-slate-200 px-4 md:px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-semibold text-slate-900">Personnel Planning</h1>
+                        <h1 class="text-xl md:text-2xl font-semibold text-slate-900">Personnel Planning</h1>
                         <p class="text-sm text-slate-500 mt-1">2025 Calendar Overview</p>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="text-sm text-slate-500">
-                            {persons.length} team members
-                        </div>
-                        <div class="text-sm text-slate-500">
-                            {events.length} scheduled events
-                        </div>
-                        <div class="text-sm text-slate-500">
-                            {languageNames[locale]}
-                        </div>
-                        {#if selectedDate}
-                            <div class="text-sm text-blue-600 font-medium">
-                                Selected: {new Intl.DateTimeFormat(locale, { 
-                                    weekday: 'short', 
-                                    year: 'numeric', 
-                                    month: 'short', 
-                                    day: 'numeric' 
-                                }).format(new Date(selectedDate))}
+                    <div class="flex items-center space-x-2 md:space-x-4">
+                        <!-- Desktop info - hidden on mobile -->
+                        <div class="hidden md:flex items-center space-x-4">
+                            <div class="text-sm text-slate-500">
+                                {persons.length} team members
                             </div>
-                        {/if}
+                            <div class="text-sm text-slate-500">
+                                {events.length} scheduled events
+                            </div>
+                            <div class="text-sm text-slate-500">
+                                {languageNames[locale]}
+                            </div>
+                            {#if selectedDate}
+                                <div class="text-sm text-blue-600 font-medium">
+                                    Selected: {new Intl.DateTimeFormat(locale, { 
+                                        weekday: 'short', 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                    }).format(new Date(selectedDate))}
+                                </div>
+                            {/if}
+                        </div>
+                        
+                        <!-- Mobile hamburger button -->
+                        <button 
+                            on:click={toggleMobileMenu}
+                            class="md:hidden p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            aria-label="Toggle menu"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {#if mobileMenuOpen}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                {:else}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                {/if}
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </header>
             
             <!-- Calendar Content -->
-            <div class="flex-1 p-6 overflow-hidden">
+            <div class="flex-1 p-4 md:p-6 overflow-hidden">
                 <Calendar 
                     {startDate}
                     {events}
@@ -241,6 +296,7 @@
                     {showWeekends}
                     {highlightWeekends}
                     {locale}
+                    {shortenPersonnelCol}
                     bind:selectedDate
                     on:selectDate={handleDateSelect}
                     on:unselectDate={handleDateUnselect}
@@ -249,8 +305,8 @@
             </div>
         </div>
         
-        <!-- Fixed Right Sidebar for Settings -->
-        <div class="w-80 flex-shrink-0 shadow-sm">
+        <!-- Desktop Sidebar - hidden on mobile -->
+        <div class="hidden md:block w-80 flex-shrink-0 shadow-sm">
             <Settings 
                 bind:this={settingsComponent}
                 bind:enableHighlight 
@@ -259,6 +315,7 @@
                 bind:locale
                 bind:persons
                 bind:selectedDate
+                bind:shortenPersonnelCol
                 {events}
                 on:goToToday={handleGoToToday}
                 on:addEvent={handleAddEvent}
@@ -266,4 +323,37 @@
             />
         </div>
     </div>
+    
+    <!-- Mobile Sidebar Overlay -->
+    {#if mobileMenuOpen}
+        <div class="md:hidden fixed inset-0 z-50 flex">
+            <!-- Backdrop -->
+            <div 
+                class="fixed inset-0 bg-black bg-opacity-50" 
+                on:click={closeMobileMenu}
+                on:keydown={(e) => e.key === 'Escape' && closeMobileMenu()}
+                role="button"
+                tabindex="0"
+                aria-label="Close menu"
+            ></div>
+            
+            <!-- Mobile Sidebar -->
+            <div class="relative ml-auto w-80 max-w-full h-full bg-white shadow-xl">
+                <Settings 
+                    bind:enableHighlight 
+                    bind:showWeekends
+                    bind:highlightWeekends
+                    bind:locale
+                    bind:persons
+                    bind:selectedDate
+                    bind:shortenPersonnelCol
+                    {events}
+                    on:goToToday={handleGoToToday}
+                    on:addEvent={handleAddEvent}
+                    on:deleteEvent={handleDeleteEvent}
+                    on:closeMobile={closeMobileMenu}
+                />
+            </div>
+        </div>
+    {/if}
 </main>

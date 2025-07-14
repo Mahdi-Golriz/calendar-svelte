@@ -4,6 +4,9 @@
     import AddEventPopup from './AddEventPopup.svelte';
     import ShowEventPopup from './ShowEventPopup.svelte';
     
+    /** @type {boolean} */
+    export let isMobile = false;
+    
     const dispatch = createEventDispatcher();
     
     /** @type {boolean} */
@@ -26,6 +29,9 @@
     
     /** @type {Array<Object>} */
     export let events = [];
+    
+    /** @type {boolean} */
+    export let shortenPersonnelCol = false;
     
     let newPersonName = '';
     let newPersonTitle = '';
@@ -113,6 +119,10 @@
         showEventPopup = !showEventPopup;
     }
 
+    function handleCloseMobile() {
+        dispatch('closeMobile');
+    }
+
     // Public method to show event details (called from parent component)
     export function showEventDetails(event) {
         selectedEventForDetails = event;
@@ -121,10 +131,37 @@
 </script>
 
 <div class="h-full bg-white border-l border-slate-200">
-    <div class="p-6 h-full overflow-y-auto">
-        <div class="mb-6">
+    <div class="p-4 md:p-6 h-full overflow-y-auto">
+        <!-- Mobile header with close button -->
+        <div class="md:hidden flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-900">Settings</h2>
+            <button 
+                on:click={handleCloseMobile}
+                class="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                aria-label="Close settings"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Desktop header -->
+        <div class="hidden md:block mb-6">
             <h2 class="text-lg font-semibold text-slate-900">Settings</h2>
             <p class="text-sm text-slate-500 mt-1">Customize your calendar view</p>
+        </div>
+        
+        <!-- Mobile status info -->
+        <div class="md:hidden mb-6 grid grid-cols-2 gap-4 text-sm">
+            <div class="text-center p-3 bg-slate-50 rounded-md">
+                <div class="font-medium text-slate-900">{persons.length}</div>
+                <div class="text-slate-500">Team members</div>
+            </div>
+            <div class="text-center p-3 bg-slate-50 rounded-md">
+                <div class="font-medium text-slate-900">{events.length}</div>
+                <div class="text-slate-500">Events</div>
+            </div>
         </div>
         
         <div class="space-y-6">
@@ -256,6 +293,15 @@
                             <input 
                                 type="checkbox" 
                                 bind:checked={highlightWeekends} 
+                                class="h-4 w-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+                            >
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm text-slate-700">Compact personnel view</span>
+                            <input 
+                                type="checkbox" 
+                                bind:checked={shortenPersonnelCol} 
                                 class="h-4 w-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
                             >
                         </label>
