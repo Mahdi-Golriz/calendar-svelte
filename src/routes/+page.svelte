@@ -122,7 +122,11 @@
         },
     ];
 
-    // Start date for the calendar
+    // Calendar date range - new configurable dates
+    let calendarStartDate = new Date(2025, 0, 1); // January 1, 2025
+    let calendarEndDate = new Date(2025, 11, 31); // December 31, 2025
+    
+    // Start date for the calendar (kept for backward compatibility)
     const startDate = new Date(2025, 0, 1); // January 1, 2025
     
     // Highlight option
@@ -330,6 +334,8 @@
             <div class="flex-1 p-4 md:p-6 overflow-hidden">
                 <Calendar 
                     {startDate}
+                    {calendarStartDate}
+                    {calendarEndDate}
                     {events}
                     {persons}
                     highlight={enableHighlight}
@@ -359,6 +365,8 @@
                 bind:persons
                 bind:selectedDate
                 bind:shortenPersonnelCol
+                bind:calendarStartDate
+                bind:calendarEndDate
                 {events}
                 on:goToToday={handleGoToToday}
                 on:addEvent={handleAddEvent}
@@ -390,6 +398,8 @@
                     bind:persons
                     bind:selectedDate
                     bind:shortenPersonnelCol
+                    bind:calendarStartDate
+                    bind:calendarEndDate
                     {events}
                     on:goToToday={handleGoToToday}
                     on:addEvent={handleAddEvent}

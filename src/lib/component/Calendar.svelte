@@ -8,6 +8,12 @@
     /** @type {Date} */
     export let startDate = new Date();
 
+    /** @type {Date} */
+    export let calendarStartDate = new Date();
+
+    /** @type {Date} */
+    export let calendarEndDate = new Date();
+
     /** @type {Array<{id: string|number, startDate: string, endDate: string, title: string, persons: Array<string|number>, description?: string, category?: string, color?: string, place?: string}>} */
     export let events = [];
 
@@ -58,13 +64,13 @@
     const namesWidthShort = 60; // Shortened width for mobile
     const dayWidth = 50;
 
-    $: processedEvents = calculateEvents(events, persons, showWeekends);
+    $: processedEvents = calculateEvents(events, persons, showWeekends,calendarStartDate, calendarEndDate);
     $: visibleDays = showWeekends ? days : days.filter((day) => !day.isWeekend);
     $: visibleMonths = showWeekends ? months : calculateVisibleMonths();
     $: actualNamesWidth = shortenPersonnelCol ? namesWidthShort : namesWidth;
 
-    // re-init when locale changes
-    $: if (startDate || locale) {
+    // re-init when locale changes or date range changes
+    $: if (startDate || locale || calendarStartDate || calendarEndDate) {
         init();
     }
 
@@ -83,23 +89,51 @@
         scrollRight();
     }
 
-    function calculateEvents(events, persons, showWeekends) {
+    function calculateEvents(events, persons, showWeekends, calendarStartDate, calendarEndDate) {
         // Process events to handle multiple persons - create separate event instance for each person
         const expandedEvents = [];
         
+        // Get calendar date range for clamping
+        const calendarStart = calendarStartDate.toISOString().split('T')[0];
+        const calendarEnd = calendarEndDate.toISOString().split('T')[0];
+        
         events.forEach((event) => {
+            // Skip events that are completely outside the calendar range
+            // An event overlaps if it starts before calendar ends AND ends after calendar starts
+            if (event.startDate > calendarEnd || event.endDate < calendarStart) {
+
+                return; // Event is completely outside calendar range
+            }
+            
+            // Clamp event dates to calendar range
+            let eventStart = event.startDate;
+            let eventEnd = event.endDate;
+            
+            // If event starts before calendar range, clamp to calendar start
+            if (eventStart < calendarStart) {
+                eventStart = calendarStart;
+            }
+            
+            // If event ends after calendar range, clamp to calendar end
+            if (eventEnd > calendarEnd) {
+                eventEnd = calendarEnd;
+            }
+            
             if (event.persons && event.persons.length > 0) {
                 // Create an event instance for each person
                 event.persons.forEach((personId) => {
                     expandedEvents.push({
                         ...event,
                         personId: personId,
-                        start: event.startDate,
-                        end: event.endDate,
+                        start: eventStart,
+                        end: eventEnd,
                         name: event.title,
                         color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
                         originalEventId: event.id, // Keep reference to original event
-                        isMultiPerson: event.persons.length > 1
+                        isMultiPerson: event.persons.length > 1,
+                        isClamped: eventStart !== event.startDate || eventEnd !== event.endDate,
+                        clampedStart: eventStart !== event.startDate,
+                        clampedEnd: eventEnd !== event.endDate
                     });
                 });
             } else {
@@ -107,12 +141,15 @@
                 expandedEvents.push({
                     ...event,
                     personId: null,
-                    start: event.startDate,
-                    end: event.endDate,
+                    start: eventStart,
+                    end: eventEnd,
                     name: event.title,
                     color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
                     originalEventId: event.id,
-                    isMultiPerson: false
+                    isMultiPerson: false,
+                    isClamped: eventStart !== event.startDate || eventEnd !== event.endDate,
+                    clampedStart: eventStart !== event.startDate,
+                    clampedEnd: eventEnd !== event.endDate
                 });
             }
         });
@@ -154,9 +191,9 @@
     }
 
     function init() {
-        const year = startDate.getFullYear();
-        const startOfYear = new Date(year, 0, 1);
-        const endOfYear = new Date(year, 11, 31);
+        // Use configurable date range instead of fixed year
+        const startOfRange = new Date(calendarStartDate);
+        const endOfRange = new Date(calendarEndDate);
         const today = new Date();
 
         const dtfDay = new Intl.DateTimeFormat(locale, { weekday: "short" });
@@ -164,24 +201,36 @@
 
         days = [];
         months = [];
-        let currentDate = new Date(startOfYear);
+        let currentDate = new Date(startOfRange);
         let currentMonth = -1;
+        let currentYear = -1;
 
-        while (currentDate <= endOfYear) {
+        while (currentDate <= endOfRange) {
             const d = currentDate.getDate();
             const dow = currentDate.getDay();
+            const month = currentDate.getMonth();
+            const year = currentDate.getFullYear();
 
-            if (currentDate.getMonth() !== currentMonth) {
-                currentMonth = currentDate.getMonth();
-                const daysInMonth = new Date(
-                    year,
-                    currentMonth + 1,
-                    0,
-                ).getDate();
+            // Handle month/year changes for header
+            if (month !== currentMonth || year !== currentYear) {
+                currentMonth = month;
+                currentYear = year;
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                // Calculate how many days of this month will actually be shown
+                let monthStartDate = new Date(year, month, 1);
+                let monthEndDate = new Date(year, month + 1, 0);
+                
+                // Clamp to our date range
+                if (monthStartDate < startOfRange) monthStartDate = new Date(startOfRange);
+                if (monthEndDate > endOfRange) monthEndDate = new Date(endOfRange);
+                
+                const daysToShow = Math.floor((monthEndDate - monthStartDate) / (1000 * 60 * 60 * 24)) + 1;
+                
                 months.push({
-                    name: `${dtfMonth.format(new Date(year, currentMonth, 1))} ${year}`,
+                    name: `${dtfMonth.format(new Date(year, month, 1))} ${year}`,
                     left: days.length * dayWidth,
-                    width: daysInMonth * dayWidth,
+                    width: Math.max(daysToShow, 0) * dayWidth,
                 });
             }
 
@@ -258,7 +307,8 @@
                 lastDay: visibleDays[visibleDays.length - 1]?.iso,
                 eventStart: event.start,
                 eventEnd: event.end,
-                isMultiPerson: event.isMultiPerson
+                isMultiPerson: event.isMultiPerson,
+                isClamped: event.isClamped
             }),
         );
 
@@ -496,11 +546,20 @@
                     <div
                         class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20 hover:scale-105"
                         class:multi-person-event={event.isMultiPerson}
-                        title={event.isMultiPerson ? `${event.name} (shared with ${event.persons?.length || 0} people)` : event.name}
+                        class:clamped-event={event.isClamped}
+                        class:clamped-start={event.clampedStart}
+                        class:clamped-end={event.clampedEnd}
+                        title={event.isMultiPerson ? `${event.name} (shared with ${event.persons?.length || 0} people)${event.isClamped ? ' - extends beyond visible range' : ''}` : `${event.name}${event.isClamped ? ' - extends beyond visible range' : ''}`}
                     >
+                        {#if event.clampedStart}
+                            <span class="text-xs opacity-75 mr-1">⤢</span>
+                        {/if}
                         <span class="truncate font-medium">{event.name}</span>
                         {#if event.isMultiPerson}
                             <span class="ml-1 text-xs opacity-75">👥</span>
+                        {/if}
+                        {#if event.clampedEnd}
+                            <span class="ml-1 text-xs opacity-75">⤡</span>
                         {/if}
                     </div>
                 </div>
@@ -585,5 +644,22 @@
 
     .multi-person-event {
         border-left: 3px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .clamped-event {
+        border-right: 3px solid rgba(255, 255, 255, 0.8);
+        border-left: 3px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .clamped-start {
+        border-left: 3px solid rgba(255, 255, 255, 0.8);
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .clamped-end {
+        border-right: 3px solid rgba(255, 255, 255, 0.8);
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
     }
 </style>

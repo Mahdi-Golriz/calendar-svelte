@@ -47,6 +47,13 @@
         { code: 'fr-FR', name: 'Français' }
     ];
     
+    /** @type {Date} */
+    export let calendarStartDate = new Date();
+    
+    /** @type {Date} */ 
+    // next 100 days
+    export let calendarEndDate = new Date(new Date().setDate(new Date().getDate() + 100));
+    
     function handleGoToToday() {
         dispatch('goToToday');
     }
@@ -123,6 +130,30 @@
         dispatch('closeMobile');
     }
 
+    function formatDateForInput(date) {
+        return date.toISOString().split('T')[0];
+    }
+    
+    function handleStartDateChange(event) {
+        const newStartDate = new Date(event.target.value);
+        if (newStartDate <= calendarEndDate) {
+            calendarStartDate = newStartDate;
+        } else {
+            // Reset input to current value if invalid
+            event.target.value = formatDateForInput(calendarStartDate);
+        }
+    }
+    
+    function handleEndDateChange(event) {
+        const newEndDate = new Date(event.target.value);
+        if (newEndDate >= calendarStartDate) {
+            calendarEndDate = newEndDate;
+        } else {
+            // Reset input to current value if invalid
+            event.target.value = formatDateForInput(calendarEndDate);
+        }
+    }
+    
     // Public method to show event details (called from parent component)
     export function showEventDetails(event) {
         selectedEventForDetails = event;
@@ -165,6 +196,41 @@
         </div>
         
         <div class="space-y-6">
+            <!-- Calendar Date Range -->
+            <div class="space-y-4 border-b border-slate-100 pb-6">
+                <h3 class="text-sm font-medium text-slate-900">Calendar Range</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">
+                            Start Date
+                        </label>
+                        <input 
+                            type="date" 
+                            value={formatDateForInput(calendarStartDate)}
+                            on:change={handleStartDateChange}
+                            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">
+                            End Date
+                        </label>
+                        <input 
+                            type="date" 
+                            value={formatDateForInput(calendarEndDate)}
+                            on:change={handleEndDateChange}
+                            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                    </div>
+                    
+                    <div class="text-xs text-slate-500">
+                        Duration: {Math.ceil((calendarEndDate - calendarStartDate) / (1000 * 60 * 60 * 24) + 1)} days
+                    </div>
+                </div>
+            </div>
+
             <!-- Selected Date -->
             {#if selectedDate}
                 <div class="space-y-4 border-b border-slate-100 pb-6">
