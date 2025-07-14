@@ -1,26 +1,26 @@
 <script>
-    import { onMount, tick } from 'svelte';
+    import { onMount, tick } from "svelte";
 
     /** @type {Date} */
     export let startDate = new Date();
-    
+
     /** @type {Array<{id: string|number, startDate: string, endDate: string, title: string, persons: Array<string|number>, description?: string, category?: string, color?: string, place?: string}>} */
     export let events = [];
-    
+
     /** @type {Array<{id: string|number, name: string, title: string}>} */
     export let persons = [];
 
     /** @type {boolean} */
     export let highlight = false;
-    
+
     /** @type {number} */
     export let goToTodayTrigger = 0;
-    
+
     /** @type {boolean} */
     export let showWeekends = true;
 
     /** @type {string} */
-    export let locale = 'de-DE';
+    export let locale = "de-DE";
 
     let days = [];
     let months = [];
@@ -35,56 +35,57 @@
     const namesWidth = 220;
     const dayWidth = 50;
 
-    $: processedEvents = events.map(event => ({
+    $: processedEvents = events.map((event) => ({
         ...event,
         personId: event.persons?.[0] || null, // Use first person for positioning
         start: event.startDate,
         end: event.endDate,
         name: event.title,
-        color: event.color ? `bg-${event.color}-500` : 'bg-blue-500'
+        color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
     }));
 
-    $: visibleDays = showWeekends ? days : days.filter(day => !day.isWeekend);
+    $: visibleDays = showWeekends ? days : days.filter((day) => !day.isWeekend);
     $: visibleMonths = showWeekends ? months : calculateVisibleMonths();
-
-
 
     // re-init when locale changes
     $: if (startDate || locale) {
         init();
     }
-    
+
     // Watch for goToTodayTrigger changes and scroll to today
     $: if (goToTodayTrigger > 0 && gridRef && days.length > 0) {
         scrollToToday();
     }
 
-
     function calculateVisibleMonths() {
         if (showWeekends) return months;
-        
+
         const visibleMonthsArray = [];
         let currentLeft = 0;
-        
+
         months.forEach((month, monthIndex) => {
             const monthStart = new Date(startDate.getFullYear(), monthIndex, 1);
-            const monthEnd = new Date(startDate.getFullYear(), monthIndex + 1, 0);
-            
-            const monthVisibleDays = visibleDays.filter(day => {
+            const monthEnd = new Date(
+                startDate.getFullYear(),
+                monthIndex + 1,
+                0,
+            );
+
+            const monthVisibleDays = visibleDays.filter((day) => {
                 const dayDate = new Date(day.iso);
                 return dayDate >= monthStart && dayDate <= monthEnd;
             });
-            
+
             if (monthVisibleDays.length > 0) {
                 visibleMonthsArray.push({
                     ...month,
                     left: currentLeft,
-                    width: monthVisibleDays.length * dayWidth
+                    width: monthVisibleDays.length * dayWidth,
                 });
                 currentLeft += monthVisibleDays.length * dayWidth;
             }
         });
-        
+
         return visibleMonthsArray;
     }
 
@@ -94,12 +95,12 @@
         const endOfYear = new Date(year, 11, 31);
         const today = new Date();
 
-        const dtfDay   = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-        const dtfMonth = new Intl.DateTimeFormat(locale, { month:  'long' });
+        const dtfDay = new Intl.DateTimeFormat(locale, { weekday: "short" });
+        const dtfMonth = new Intl.DateTimeFormat(locale, { month: "long" });
 
         days = [];
         months = [];
-        let currentDate  = new Date(startOfYear);
+        let currentDate = new Date(startOfYear);
         let currentMonth = -1;
 
         while (currentDate <= endOfYear) {
@@ -108,7 +109,11 @@
 
             if (currentDate.getMonth() !== currentMonth) {
                 currentMonth = currentDate.getMonth();
-                const daysInMonth = new Date(year, currentMonth + 1, 0).getDate();
+                const daysInMonth = new Date(
+                    year,
+                    currentMonth + 1,
+                    0,
+                ).getDate();
                 months.push({
                     name: `${dtfMonth.format(new Date(year, currentMonth, 1))} ${year}`,
                     left: days.length * dayWidth,
@@ -117,15 +122,19 @@
             }
 
             days.push({
-                name: dtfDay.format(currentDate).slice(0,2),
-                date: new Intl.DateTimeFormat(locale, { day: '2-digit' }).format(currentDate),
-                iso: currentDate.toISOString().split('T')[0],
+                name: dtfDay.format(currentDate).slice(0, 2),
+                date: new Intl.DateTimeFormat(locale, {
+                    day: "2-digit",
+                }).format(currentDate),
+                iso: currentDate.toISOString().split("T")[0],
                 isToday: currentDate.toDateString() === today.toDateString(),
                 isWeekend: dow === 0 || dow === 6,
             });
 
             currentDate.setDate(d + 1);
         }
+
+        visibleDays = days;
     }
 
     function syncScroll(event) {
@@ -134,25 +143,40 @@
     }
 
     function scrollToToday() {
-        const todayIndex = visibleDays.findIndex(d => d.isToday);
+        const todayIndex = visibleDays.findIndex((d) => d.isToday);
         if (todayIndex > -1 && gridRef) {
             const gridWidth = gridRef.clientWidth;
-            const centeredPosition = (todayIndex * dayWidth) - (gridWidth / 2) + (dayWidth / 2);
+            const centeredPosition =
+                todayIndex * dayWidth - gridWidth / 2 + dayWidth / 2;
             gridRef.scrollTo({
                 left: centeredPosition,
-                behavior: 'smooth'
+                behavior: "smooth",
             });
         }
     }
 
-    function getEventStyle(event) {
-        const personIndex = persons.findIndex(p => p.id === event.personId);
-        const startIndex = visibleDays.findIndex(d => d.iso === event.start);
-        const endIndex = visibleDays.findIndex(d => d.iso === event.end);
+    function getEventStyle(event, showWeekends) {
+        const personIndex = persons.findIndex((p) => p.id === event.personId);
+        const startIndex = visibleDays.findIndex((d) => d.iso === event.start);
+        const endIndex = visibleDays.findIndex((d) => d.iso === event.end);
 
-        console.log('getEventStyle', JSON.stringify({ event, personIndex, startIndex, endIndex }));
+        console.log(
+            "getEventStyle",
+            JSON.stringify({
+                event,
+                personIndex,
+                startIndex,
+                endIndex,
+                visibleDaysLength: visibleDays.length,
+                firstDay: visibleDays[0]?.iso,
+                lastDay: visibleDays[visibleDays.length - 1]?.iso,
+                eventStart: event.start,
+                eventEnd: event.end,
+            }),
+        );
 
-        if (personIndex === -1 || startIndex === -1 || endIndex === -1) return 'display: none;';
+        if (personIndex === -1 || startIndex === -1 || endIndex === -1)
+            return "display: none;";
 
         const top = personIndex * rowHeight;
         const left = startIndex * dayWidth;
@@ -183,66 +207,119 @@
 
 <div class="scheduler-container shadow-sm">
     <!-- Top-Left Corner -->
-    <div class="scheduler-corner border-r border-b bg-slate-50/50 flex items-center justify-center">
+    <div
+        class="scheduler-corner border-r border-b bg-slate-50/50 flex items-center justify-center"
+    >
         <h3 class="text-sm font-medium text-slate-900">Personnel</h3>
     </div>
 
     <!-- Timeline Header -->
-    <div bind:this={headerRef} class="scheduler-header-container bg-slate-50/50 border-b overflow-hidden">
-        <div class="relative" style="width: {visibleDays.length * dayWidth}px; height: 100%">
+    <div
+        bind:this={headerRef}
+        class="scheduler-header-container bg-slate-50/50 border-b overflow-hidden"
+    >
+        <div
+            class="relative"
+            style="width: {visibleDays.length * dayWidth}px; height: 100%"
+        >
             <!-- Months Row -->
             {#each visibleMonths as month}
-                <div class="absolute top-0 h-8 flex items-center justify-center border-r border-slate-200"
-                     style="left: {month.left}px; width: {month.width}px">
-                    <span class="font-medium text-xs text-slate-600 tracking-wide">{month.name}</span>
+                <div
+                    class="absolute top-0 h-8 flex items-center justify-center border-r border-slate-200"
+                    style="left: {month.left}px; width: {month.width}px"
+                >
+                    <span
+                        class="font-medium text-xs text-slate-600 tracking-wide"
+                        >{month.name}</span
+                    >
                 </div>
             {/each}
             <!-- Days Row -->
             {#each visibleDays as day, index}
-                <div class="absolute top-8 text-center text-xs h-16 pt-2 flex flex-col items-center justify-center border-r border-slate-100"
-                     class:font-semibold={day.isToday}
-                     class:text-blue-600={day.isToday}
-                     class:today-highlight={day.isToday}
-                     class:header-highlight={highlight && hoveredCell.dayIndex === index}
-                     style="left: {index * dayWidth}px; width: {dayWidth}px">
-                    <span class="text-slate-400 text-[10px] uppercase tracking-wider mb-1">{day.name.slice(0, 2)}</span>
-                    <span class="text-slate-900 font-medium text-sm">{day.date.split('.')[0]}</span>
+                <div
+                    class="absolute top-8 text-center text-xs h-16 pt-2 flex flex-col items-center justify-center border-r border-slate-100"
+                    class:font-semibold={day.isToday}
+                    class:text-blue-600={day.isToday}
+                    class:today-highlight={day.isToday}
+                    class:header-highlight={highlight &&
+                        hoveredCell.dayIndex === index}
+                    style="left: {index * dayWidth}px; width: {dayWidth}px"
+                >
+                    <span
+                        class="text-slate-400 text-[10px] uppercase tracking-wider mb-1"
+                        >{day.name.slice(0, 2)}</span
+                    >
+                    <span class="text-slate-900 font-medium text-sm"
+                        >{day.date.split(".")[0]}</span
+                    >
                 </div>
             {/each}
         </div>
     </div>
 
     <!-- Names Column -->
-    <div bind:this={namesRef} class="scheduler-names-container bg-white border-r overflow-hidden">
+    <div
+        bind:this={namesRef}
+        class="scheduler-names-container bg-white border-r overflow-hidden"
+    >
         <div class="relative">
             {#each persons as person, personIndex}
-                <div class="person-row flex items-center px-4 py-3 border-b border-slate-100" 
-                     class:header-highlight={highlight && hoveredCell.personIndex === personIndex}
-                     style="height: {rowHeight}px">
+                <div
+                    class="person-row flex items-center px-4 py-3 border-b border-slate-100"
+                    class:header-highlight={highlight &&
+                        hoveredCell.personIndex === personIndex}
+                    style="height: {rowHeight}px"
+                >
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                            <span class="text-xs font-medium text-slate-600">{person.name.split(' ').map(n => n[0]).join('')}</span>
+                        <div
+                            class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                        >
+                            <span class="text-xs font-medium text-slate-600"
+                                >{person.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}</span
+                            >
                         </div>
                         <div>
-                            <p class="font-medium text-sm text-slate-900 leading-none">{person.name}</p>
-                            <p class="text-xs text-slate-500 mt-1">{person.title}</p>
+                            <p
+                                class="font-medium text-sm text-slate-900 leading-none"
+                            >
+                                {person.name}
+                            </p>
+                            <p class="text-xs text-slate-500 mt-1">
+                                {person.title}
+                            </p>
                         </div>
                     </div>
                 </div>
             {/each}
         </div>
     </div>
-    
+
     <!-- Main Grid and Events -->
-    <div bind:this={gridRef} on:scroll={syncScroll} class="scheduler-grid-container overflow-auto bg-white">
-        <div class="relative" style="width: {visibleDays.length * dayWidth}px; height: {persons.length * rowHeight}px">
+    <div
+        bind:this={gridRef}
+        on:scroll={syncScroll}
+        class="scheduler-grid-container overflow-auto bg-white"
+    >
+        <div
+            class="relative"
+            style="width: {visibleDays.length *
+                dayWidth}px; height: {persons.length * rowHeight}px"
+        >
             <!-- Grid Cells -->
             {#each visibleDays as day, dayIndex}
                 {#each persons as person, personIndex}
-                    <div class="day-cell absolute border-r border-b border-slate-50 cursor-pointer"
-                         on:mouseenter={() => handleCellHover(dayIndex, personIndex)}
-                         on:mouseleave={handleCellLeave}
-                         style="left: {dayIndex * dayWidth}px; top: {personIndex * rowHeight}px; width: {dayWidth}px; height: {rowHeight}px">
+                    <div
+                        class="day-cell absolute border-r border-b border-slate-50 cursor-pointer"
+                        on:mouseenter={() =>
+                            handleCellHover(dayIndex, personIndex)}
+                        on:mouseleave={handleCellLeave}
+                        style="left: {dayIndex *
+                            dayWidth}px; top: {personIndex *
+                            rowHeight}px; width: {dayWidth}px; height: {rowHeight}px"
+                    >
                         {#if day.isToday}
                             <div class="w-full h-full today-highlight"></div>
                         {/if}
@@ -252,9 +329,13 @@
 
             <!-- Events -->
             {#each processedEvents as event}
-                <div class="absolute flex items-center justify-center p-1 pointer-events-none"
-                     style={getEventStyle(event)}>
-                    <div class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20">
+                <div
+                    class="absolute flex items-center justify-center p-1 pointer-events-none"
+                    style={getEventStyle(event,showWeekends)}
+                >
+                    <div
+                        class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20"
+                    >
                         <span class="truncate font-medium">{event.name}</span>
                     </div>
                 </div>
@@ -262,8 +343,6 @@
         </div>
     </div>
 </div>
-
-
 
 <style>
     :root {
@@ -286,11 +365,19 @@
         overflow: hidden;
         background: hsl(0 0% 100%);
     }
-    .scheduler-corner { grid-area: corner; }
-    .scheduler-header-container { grid-area: header; }
-    .scheduler-names-container { grid-area: names; }
-    .scheduler-grid-container { grid-area: grid; }
-    
+    .scheduler-corner {
+        grid-area: corner;
+    }
+    .scheduler-header-container {
+        grid-area: header;
+    }
+    .scheduler-names-container {
+        grid-area: names;
+    }
+    .scheduler-grid-container {
+        grid-area: grid;
+    }
+
     .weekend-highlight {
         background-color: hsl(210 40% 98%);
     }
