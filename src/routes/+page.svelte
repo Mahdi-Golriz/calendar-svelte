@@ -136,6 +136,8 @@
     
     // Navigation trigger for calendar
     let goToTodayTrigger = 0;
+    let scrollLeftTrigger = 0;
+    let scrollRightTrigger = 0;
     
     /** @type {string} */
     let locale = 'en-US'; // Changed default to English
@@ -194,6 +196,14 @@
         goToTodayTrigger += 1; // Increment to trigger reactive update
     }
 
+    function handleScrollLeft() {
+        scrollLeftTrigger += 1;
+    }
+
+    function handleScrollRight() {
+        scrollRightTrigger += 1;
+    }
+
     function handleDateSelect(event) {
         const { date } = event.detail;
         console.log('Date selected:', date);
@@ -244,6 +254,37 @@
                         <p class="text-sm text-slate-500 mt-1">2025 Calendar Overview</p>
                     </div>
                     <div class="flex items-center space-x-2 md:space-x-4">
+                        <!-- Navigation buttons -->
+                        <div class="flex items-center space-x-1">
+                            <button 
+                                on:click={handleScrollLeft}
+                                class="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                title="Scroll left"
+                                aria-label="Scroll calendar left"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <button 
+                                on:click={handleGoToToday}
+                                class="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                title="Go to today"
+                            >
+                                Today
+                            </button>
+                            <button 
+                                on:click={handleScrollRight}
+                                class="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                title="Scroll right"
+                                aria-label="Scroll calendar right"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+
                         <!-- Desktop info - hidden on mobile -->
                         <div class="hidden md:flex items-center space-x-4">
                             <div class="text-sm text-slate-500">
@@ -293,6 +334,8 @@
                     {persons}
                     highlight={enableHighlight}
                     {goToTodayTrigger}
+                    {scrollLeftTrigger}
+                    {scrollRightTrigger}
                     {showWeekends}
                     {highlightWeekends}
                     {locale}

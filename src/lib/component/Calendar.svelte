@@ -20,6 +20,12 @@
     /** @type {number} */
     export let goToTodayTrigger = 0;
 
+    /** @type {number} */
+    export let scrollLeftTrigger = 0;
+
+    /** @type {number} */
+    export let scrollRightTrigger = 0;
+
     /** @type {boolean} */
     export let showWeekends = true;
 
@@ -65,6 +71,16 @@
     // Watch for goToTodayTrigger changes and scroll to today
     $: if (goToTodayTrigger > 0 && gridRef && days.length > 0) {
         scrollToToday();
+    }
+
+    // Watch for scroll left trigger
+    $: if (scrollLeftTrigger > 0 && gridRef && days.length > 0) {
+        scrollLeft();
+    }
+
+    // Watch for scroll right trigger
+    $: if (scrollRightTrigger > 0 && gridRef && days.length > 0) {
+        scrollRight();
     }
 
     function calculateEvents(events, persons, showWeekends) {
@@ -198,6 +214,28 @@
                 todayIndex * dayWidth - gridWidth / 2 + dayWidth / 2;
             gridRef.scrollTo({
                 left: centeredPosition,
+                behavior: "smooth",
+            });
+        }
+    }
+
+    function scrollLeft() {
+        if (gridRef) {
+            const gridWidth = gridRef.clientWidth;
+            const scrollAmount = gridWidth * 0.8; // Scroll 80% of visible width
+            gridRef.scrollBy({
+                left: -scrollAmount,
+                behavior: "smooth",
+            });
+        }
+    }
+
+    function scrollRight() {
+        if (gridRef) {
+            const gridWidth = gridRef.clientWidth;
+            const scrollAmount = gridWidth * 0.8; // Scroll 80% of visible width
+            gridRef.scrollBy({
+                left: scrollAmount,
                 behavior: "smooth",
             });
         }
