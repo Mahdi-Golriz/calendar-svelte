@@ -2,6 +2,7 @@
     import { createEventDispatcher } from 'svelte';
     import PersonSmallSettingsItem from './PersonSmallSettingsItem.svelte';
     import AddEventPopup from './AddEventPopup.svelte';
+    import ShowEventPopup from './ShowEventPopup.svelte';
     
     const dispatch = createEventDispatcher();
     
@@ -30,6 +31,8 @@
     let newPersonTitle = '';
     let showAddForm = false;
     let showEventPopup = false;
+    let showEventDetailsPopup = false;
+    let selectedEventForDetails = null;
     
     const availableLanguages = [
         { code: 'de-DE', name: 'Deutsch' },
@@ -88,8 +91,32 @@
         dispatch('addEvent', newEvent);
     }
     
+    function handleShowEventDetails(event) {
+        selectedEventForDetails = event.detail;
+        showEventDetailsPopup = true;
+    }
+    
+    function handleEditEvent(event) {
+        // For now, just close the details popup
+        // You could implement edit functionality here
+        showEventDetailsPopup = false;
+        console.log('Edit event:', event.detail);
+    }
+    
+    function handleDeleteEvent(event) {
+        const eventId = event.detail;
+        dispatch('deleteEvent', eventId);
+        showEventDetailsPopup = false;
+    }
+    
     function toggleEventPopup() {
         showEventPopup = !showEventPopup;
+    }
+
+    // Public method to show event details (called from parent component)
+    export function showEventDetails(event) {
+        selectedEventForDetails = event;
+        showEventDetailsPopup = true;
     }
 </script>
 
@@ -262,6 +289,14 @@
         </div>
     </div>
 </div>
+
+<ShowEventPopup 
+    bind:isOpen={showEventDetailsPopup}
+    event={selectedEventForDetails}
+    {persons}
+    on:editEvent={handleEditEvent}
+    on:deleteEvent={handleDeleteEvent}
+/>
 
 <AddEventPopup 
     bind:isOpen={showEventPopup}

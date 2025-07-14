@@ -31,6 +31,9 @@
     /** @type {boolean} */
     export let highlightWeekends = false;
 
+    /** @type {Object|null} */
+    export let selectedEvent = null;
+
     let days = [];
     let months = [];
     let headerRef;
@@ -258,6 +261,17 @@
         }
     }
 
+    function handleEventClick(event, mouseEvent) {
+        mouseEvent.stopPropagation();
+        mouseEvent.preventDefault();
+        
+        // Find the original event from the processed event
+        const originalEvent = events.find(e => e.id === event.originalEventId);
+        if (originalEvent) {
+            dispatch('eventClick', originalEvent);
+        }
+    }
+
     onMount(async () => {
         init();
         await tick();
@@ -402,11 +416,15 @@
             <!-- Events -->
             {#each processedEvents as event}
                 <div
-                    class="absolute flex items-center justify-center p-1 pointer-events-none"
+                    class="absolute flex items-center justify-center p-1 pointer-events-auto cursor-pointer"
                     style={getEventStyle(event, showWeekends)}
+                    on:click={(e) => handleEventClick(event, e)}
+                    role="button"
+                    tabindex="0"
+                    on:keydown={(e) => e.key === 'Enter' && handleEventClick(event, e)}
                 >
                     <div
-                        class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20"
+                        class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20 hover:scale-105"
                         class:multi-person-event={event.isMultiPerson}
                         title={event.isMultiPerson ? `${event.name} (shared with ${event.persons?.length || 0} people)` : event.name}
                     >

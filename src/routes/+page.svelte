@@ -150,6 +150,9 @@
     /** @type {string|null} */
     let selectedDate = null;
 
+    // Reference to Settings component to trigger event details popup
+    let settingsComponent;
+
     function handleGoToToday() {
         goToTodayTrigger += 1; // Increment to trigger reactive update
     }
@@ -169,6 +172,21 @@
     function handleAddEvent(event) {
         const newEvent = event.detail;
         events = [...events, newEvent];
+    }
+
+    function handleEventClick(event) {
+        const clickedEvent = event.detail;
+        console.log('Event clicked:', clickedEvent);
+        
+        // Trigger the show event details popup in Settings component
+        if (settingsComponent) {
+            settingsComponent.showEventDetails(clickedEvent);
+        }
+    }
+
+    function handleDeleteEvent(event) {
+        const eventId = event.detail;
+        events = events.filter(e => e.id !== eventId);
     }
 </script>
 
@@ -226,6 +244,7 @@
                     bind:selectedDate
                     on:selectDate={handleDateSelect}
                     on:unselectDate={handleDateUnselect}
+                    on:eventClick={handleEventClick}
                 />
             </div>
         </div>
@@ -233,6 +252,7 @@
         <!-- Fixed Right Sidebar for Settings -->
         <div class="w-80 flex-shrink-0 shadow-sm">
             <Settings 
+                bind:this={settingsComponent}
                 bind:enableHighlight 
                 bind:showWeekends
                 bind:highlightWeekends
@@ -242,6 +262,7 @@
                 {events}
                 on:goToToday={handleGoToToday}
                 on:addEvent={handleAddEvent}
+                on:deleteEvent={handleDeleteEvent}
             />
         </div>
     </div>
