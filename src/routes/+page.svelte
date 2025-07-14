@@ -126,6 +126,19 @@
     
     // Highlight option
     let enableHighlight = true;
+    
+    // Weekend display option
+    let showWeekends = true;
+    
+    // Navigation trigger for calendar
+    let goToTodayTrigger = 0;
+    
+    /** @type {string} */
+    let locale = 'de-DE';
+
+    function handleGoToToday() {
+        goToTodayTrigger += 1; // Increment to trigger reactive update
+    }
 </script>
 
 <svelte:head>
@@ -162,13 +175,21 @@
                     {events}
                     {persons}
                     highlight={enableHighlight}
+                    {goToTodayTrigger}
+                    {showWeekends}
+                    locale={locale}
                 />
             </div>
         </div>
         
         <!-- Fixed Right Sidebar for Settings -->
         <div class="w-80 flex-shrink-0 shadow-sm">
-            <Settings bind:enableHighlight />
+            <Settings 
+                bind:enableHighlight 
+                bind:showWeekends
+                bind:locale
+                on:goToToday={handleGoToToday}
+            />
         </div>
     </div>
 </main>

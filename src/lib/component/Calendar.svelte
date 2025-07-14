@@ -12,6 +12,15 @@
 
     /** @type {boolean} */
     export let highlight = false;
+    
+    /** @type {number} */
+    export let goToTodayTrigger = 0;
+    
+    /** @type {boolean} */
+    export let showWeekends = true;
+
+    /** @type {string} */
+    export let locale = 'de-DE';
 
     let days = [];
     let months = [];
@@ -35,40 +44,87 @@
         color: event.color ? `bg-${event.color}-500` : 'bg-blue-500'
     }));
 
+    $: visibleDays = showWeekends ? days : days.filter(day => !day.isWeekend);
+    $: visibleMonths = showWeekends ? months : calculateVisibleMonths();
+
+
+
+    // re-init when locale changes
+    $: if (startDate || locale) {
+        init();
+    }
+    
+    // Watch for goToTodayTrigger changes and scroll to today
+    $: if (goToTodayTrigger > 0 && gridRef && days.length > 0) {
+        scrollToToday();
+    }
+
+
+    function calculateVisibleMonths() {
+        if (showWeekends) return months;
+        
+        const visibleMonthsArray = [];
+        let currentLeft = 0;
+        
+        months.forEach((month, monthIndex) => {
+            const monthStart = new Date(startDate.getFullYear(), monthIndex, 1);
+            const monthEnd = new Date(startDate.getFullYear(), monthIndex + 1, 0);
+            
+            const monthVisibleDays = visibleDays.filter(day => {
+                const dayDate = new Date(day.iso);
+                return dayDate >= monthStart && dayDate <= monthEnd;
+            });
+            
+            if (monthVisibleDays.length > 0) {
+                visibleMonthsArray.push({
+                    ...month,
+                    left: currentLeft,
+                    width: monthVisibleDays.length * dayWidth
+                });
+                currentLeft += monthVisibleDays.length * dayWidth;
+            }
+        });
+        
+        return visibleMonthsArray;
+    }
+
     function init() {
         const year = startDate.getFullYear();
         const startOfYear = new Date(year, 0, 1);
         const endOfYear = new Date(year, 11, 31);
         const today = new Date();
-        
-        const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-        const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-        
+
+        const dtfDay   = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+        const dtfMonth = new Intl.DateTimeFormat(locale, { month:  'long' });
+
         days = [];
         months = [];
-        let currentDate = new Date(startOfYear);
+        let currentDate  = new Date(startOfYear);
         let currentMonth = -1;
 
         while (currentDate <= endOfYear) {
-            const dayOfWeek = currentDate.getDay();
+            const d = currentDate.getDate();
+            const dow = currentDate.getDay();
+
             if (currentDate.getMonth() !== currentMonth) {
                 currentMonth = currentDate.getMonth();
                 const daysInMonth = new Date(year, currentMonth + 1, 0).getDate();
                 months.push({
-                    name: `${monthNames[currentMonth]} ${year}`,
+                    name: `${dtfMonth.format(new Date(year, currentMonth, 1))} ${year}`,
                     left: days.length * dayWidth,
                     width: daysInMonth * dayWidth,
                 });
             }
 
             days.push({
-                name: dayNames[dayOfWeek],
-                date: currentDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                name: dtfDay.format(currentDate).slice(0,2),
+                date: new Intl.DateTimeFormat(locale, { day: '2-digit' }).format(currentDate),
                 iso: currentDate.toISOString().split('T')[0],
                 isToday: currentDate.toDateString() === today.toDateString(),
-                isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+                isWeekend: dow === 0 || dow === 6,
             });
-            currentDate.setDate(currentDate.getDate() + 1);
+
+            currentDate.setDate(d + 1);
         }
     }
 
@@ -78,18 +134,21 @@
     }
 
     function scrollToToday() {
-        const todayIndex = days.findIndex(d => d.isToday);
+        const todayIndex = visibleDays.findIndex(d => d.isToday);
         if (todayIndex > -1 && gridRef) {
             const gridWidth = gridRef.clientWidth;
             const centeredPosition = (todayIndex * dayWidth) - (gridWidth / 2) + (dayWidth / 2);
-            gridRef.scrollLeft = centeredPosition;
+            gridRef.scrollTo({
+                left: centeredPosition,
+                behavior: 'smooth'
+            });
         }
     }
 
     function getEventStyle(event) {
         const personIndex = persons.findIndex(p => p.id === event.personId);
-        const startIndex = days.findIndex(d => d.iso === event.start);
-        const endIndex = days.findIndex(d => d.iso === event.end);
+        const startIndex = visibleDays.findIndex(d => d.iso === event.start);
+        const endIndex = visibleDays.findIndex(d => d.iso === event.end);
 
         if (personIndex === -1 || startIndex === -1 || endIndex === -1) return 'display: none;';
 
@@ -118,16 +177,12 @@
         await tick();
         scrollToToday();
     });
-
-    $: if (startDate) {
-        init();
-    }
 </script>
 
 <style>
     :root {
         --row-height: 52px;
-        --header-height: 72px;
+        --header-height: 97px;
         --names-width: 240px;
         --day-width: 48px;
     }
@@ -173,6 +228,10 @@
     .day-cell:hover {
         background-color: hsl(210 40% 96%);
     }
+
+    .scheduler-grid-container {
+        scroll-behavior: smooth;
+    }
 </style>
 
 <div class="scheduler-container shadow-sm">
@@ -183,16 +242,16 @@
 
     <!-- Timeline Header -->
     <div bind:this={headerRef} class="scheduler-header-container bg-slate-50/50 border-b overflow-hidden">
-        <div class="relative" style="width: {days.length * dayWidth}px; height: 100%">
+        <div class="relative" style="width: {visibleDays.length * dayWidth}px; height: 100%">
             <!-- Months Row -->
-            {#each months as month}
+            {#each visibleMonths as month}
                 <div class="absolute top-0 h-8 flex items-center justify-center border-r border-slate-200"
                      style="left: {month.left}px; width: {month.width}px">
                     <span class="font-medium text-xs text-slate-600 tracking-wide">{month.name}</span>
                 </div>
             {/each}
             <!-- Days Row -->
-            {#each days as day, index}
+            {#each visibleDays as day, index}
                 <div class="absolute top-8 text-center text-xs h-16 pt-2 flex flex-col items-center justify-center border-r border-slate-100"
                      class:font-semibold={day.isToday}
                      class:text-blue-600={day.isToday}
@@ -229,12 +288,11 @@
     
     <!-- Main Grid and Events -->
     <div bind:this={gridRef} on:scroll={syncScroll} class="scheduler-grid-container overflow-auto bg-white">
-        <div class="relative" style="width: {days.length * dayWidth}px; height: {persons.length * rowHeight}px">
+        <div class="relative" style="width: {visibleDays.length * dayWidth}px; height: {persons.length * rowHeight}px">
             <!-- Grid Cells -->
-            {#each days as day, dayIndex}
+            {#each visibleDays as day, dayIndex}
                 {#each persons as person, personIndex}
                     <div class="day-cell absolute border-r border-b border-slate-50 cursor-pointer"
-                         class:weekend-highlight={day.isWeekend}
                          on:mouseenter={() => handleCellHover(dayIndex, personIndex)}
                          on:mouseleave={handleCellLeave}
                          style="left: {dayIndex * dayWidth}px; top: {personIndex * rowHeight}px; width: {dayWidth}px; height: {rowHeight}px">

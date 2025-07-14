@@ -1,9 +1,22 @@
 <script>
+    import { createEventDispatcher } from 'svelte';
+    
+    const dispatch = createEventDispatcher();
+    
     /** @type {boolean} */
     export let enableHighlight = true;
     
-    let showWeekends = true;
+    /** @type {boolean} */
+    export let showWeekends = true;
+    
+    /** @type {string} */
+    export let locale = 'de-DE';
+    
     let compactView = false;
+    
+    function handleGoToToday() {
+        dispatch('goToToday');
+    }
 </script>
 
 <div class="h-full bg-white border-l border-slate-200">
@@ -47,32 +60,34 @@
                         </label>
                     </div>
                 </div>
-            </div>
-            
-            <div class="border-t border-slate-100 pt-6">
-                <h3 class="text-sm font-medium text-slate-900 mb-3">Quick Actions</h3>
-                <div class="space-y-2">
-                    <button class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
-                        Go to today
-                    </button>
-                    <button class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
-                        Export calendar
-                    </button>
-                    <button class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
-                        Print view
-                    </button>
+                
+                <div class="border-t border-slate-100 pt-6">
+                    <h3 class="text-sm font-medium text-slate-900 mb-3">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <button 
+                            on:click={handleGoToToday}
+                            class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
+                            Go to today
+                        </button>
+                        <button class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
+                            Export calendar
+                        </button>
+                        <button class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
+                            Print view
+                        </button>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="border-t border-slate-100 pt-6">
-                <h3 class="text-sm font-medium text-slate-900 mb-3">View Options</h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
-                        Year
-                    </button>
-                    <button class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">
-                        Quarter
-                    </button>
+                
+                <div class="border-t border-slate-100 pt-6">
+                    <h3 class="text-sm font-medium text-slate-900 mb-3">View Options</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
+                            Year
+                        </button>
+                        <button class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">
+                            Quarter
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
