@@ -10,11 +10,15 @@
     /** @type {Array<{id: string|number, name: string, title: string}>} */
     export let persons = [];
 
+    /** @type {boolean} */
+    export let highlight = false;
+
     let days = [];
     let months = [];
     let headerRef;
     let namesRef;
     let gridRef;
+    let hoveredCell = { dayIndex: -1, personIndex: -1 };
 
     // CSS custom properties for consistent sizing
     const rowHeight = 55;
@@ -97,6 +101,18 @@
         return `top: ${top}px; left: ${left}px; width: ${width}px; height: ${height}px;`;
     }
 
+    function handleCellHover(dayIndex, personIndex) {
+        if (highlight) {
+            hoveredCell = { dayIndex, personIndex };
+        }
+    }
+
+    function handleCellLeave() {
+        if (highlight) {
+            hoveredCell = { dayIndex: -1, personIndex: -1 };
+        }
+    }
+
     onMount(async () => {
         init();
         await tick();
@@ -133,6 +149,10 @@
     .weekend-highlight {
         background-color: #f8fafc;
     }
+
+    .header-highlight {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+    }
 </style>
 
 <div class="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
@@ -159,6 +179,7 @@
                          class:text-blue-600={day.isToday}
                          class:bg-blue-100={day.isToday}
                          class:rounded-t-lg={day.isToday}
+                         class:header-highlight={highlight && hoveredCell.dayIndex === index}
                          style="left: {index * dayWidth}px; width: {dayWidth}px">
                         <span class="text-gray-500">{day.name.slice(0, 1)}</span>
                         <p class="text-gray-800 font-medium">{day.date.split('.')[0]}</p>
@@ -170,8 +191,10 @@
         <!-- Names Column -->
         <div bind:this={namesRef} class="scheduler-names-container bg-white border-r border-gray-200 overflow-hidden">
             <div class="relative">
-                {#each persons as person}
-                    <div class="flex items-center px-4 border-b border-gray-100" style="height: {rowHeight}px">
+                {#each persons as person, personIndex}
+                    <div class="flex items-center px-4 border-b border-gray-100" 
+                         class:header-highlight={highlight && hoveredCell.personIndex === personIndex}
+                         style="height: {rowHeight}px">
                         <div>
                             <p class="font-semibold text-sm text-gray-800">{person.name}</p>
                             <p class="text-xs text-gray-500">{person.title}</p>
@@ -187,8 +210,10 @@
                 <!-- Grid Cells -->
                 {#each days as day, dayIndex}
                     {#each persons as person, personIndex}
-                        <div class="absolute border-r border-b border-gray-100"
+                        <div class="absolute border-r border-b border-gray-100 cursor-pointer"
                              class:weekend-highlight={day.isWeekend}
+                             on:mouseenter={() => handleCellHover(dayIndex, personIndex)}
+                             on:mouseleave={handleCellLeave}
                              style="left: {dayIndex * dayWidth}px; top: {personIndex * rowHeight}px; width: {dayWidth}px; height: {rowHeight}px">
                             {#if day.isToday}
                                 <div class="w-full h-full bg-blue-500/10"></div>
@@ -199,7 +224,7 @@
 
                 <!-- Events -->
                 {#each processedEvents as event}
-                    <div class="absolute flex items-center justify-center p-1.5"
+                    <div class="absolute flex items-center justify-center p-1.5 pointer-events-none"
                          style={getEventStyle(event)}>
                         <div class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-md hover:opacity-80 transition-opacity {event.color}">
                             <span class="truncate">{event.name}</span>

@@ -122,6 +122,9 @@
 
     // Start date for the calendar
     const startDate = new Date(2025, 0, 1); // January 1, 2025
+    
+    // Highlight option
+    let enableHighlight = true;
 </script>
 
 <svelte:head>
@@ -133,10 +136,18 @@
     <div class="max-w-7xl mx-auto">
         <h1 class="text-3xl font-bold text-gray-800 mb-6">Personalplanung 2025</h1>
         
+        <div class="mb-4">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" bind:checked={enableHighlight} class="form-checkbox">
+                <span class="text-gray-700">Enable header highlighting on hover</span>
+            </label>
+        </div>
+        
         <Calendar 
             {startDate}
             {events}
             {persons}
+            highlight={enableHighlight}
         />
     </div>
 </main>
