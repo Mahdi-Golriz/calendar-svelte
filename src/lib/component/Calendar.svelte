@@ -59,15 +59,40 @@
     }
 
     function calculateEvents(events, persons, showWeekends) {
-        // Process events to include person names and handle weekend visibility
-        return events.map((event) => ({
-            ...event,
-            personId: event.persons?.[0] || null, // Use first person for positioning
-            start: event.startDate,
-            end: event.endDate,
-            name: event.title,
-            color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
-        }));
+        // Process events to handle multiple persons - create separate event instance for each person
+        const expandedEvents = [];
+        
+        events.forEach((event) => {
+            if (event.persons && event.persons.length > 0) {
+                // Create an event instance for each person
+                event.persons.forEach((personId) => {
+                    expandedEvents.push({
+                        ...event,
+                        personId: personId,
+                        start: event.startDate,
+                        end: event.endDate,
+                        name: event.title,
+                        color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
+                        originalEventId: event.id, // Keep reference to original event
+                        isMultiPerson: event.persons.length > 1
+                    });
+                });
+            } else {
+                // Handle events without persons (fallback)
+                expandedEvents.push({
+                    ...event,
+                    personId: null,
+                    start: event.startDate,
+                    end: event.endDate,
+                    name: event.title,
+                    color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
+                    originalEventId: event.id,
+                    isMultiPerson: false
+                });
+            }
+        });
+        
+        return expandedEvents;
     }
 
     
@@ -186,6 +211,7 @@
                 lastDay: visibleDays[visibleDays.length - 1]?.iso,
                 eventStart: event.start,
                 eventEnd: event.end,
+                isMultiPerson: event.isMultiPerson
             }),
         );
 
@@ -381,8 +407,13 @@
                 >
                     <div
                         class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20"
+                        class:multi-person-event={event.isMultiPerson}
+                        title={event.isMultiPerson ? `${event.name} (shared with ${event.persons?.length || 0} people)` : event.name}
                     >
                         <span class="truncate font-medium">{event.name}</span>
+                        {#if event.isMultiPerson}
+                            <span class="ml-1 text-xs opacity-75">👥</span>
+                        {/if}
                     </div>
                 </div>
             {/each}
@@ -461,5 +492,9 @@
 
     .scheduler-grid-container {
         scroll-behavior: smooth;
+    }
+
+    .multi-person-event {
+        border-left: 3px solid rgba(255, 255, 255, 0.8);
     }
 </style>
