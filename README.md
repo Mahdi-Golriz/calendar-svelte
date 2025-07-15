@@ -9,7 +9,7 @@ A customizable Svelte-based personnel calendar to visualize events such as vacat
 npm install
 
 # run the project
-npm crun dev
+npm run dev
 ```
 
 
