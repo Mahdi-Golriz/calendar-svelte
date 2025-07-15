@@ -1,38 +1,42 @@
-# create-svelte
+# 📅 Personnel Calendar
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+A customizable Svelte-based personnel calendar to visualize events such as vacations, conferences, or project schedules across a team. It supports localization, dynamic event management, and responsive views.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
+🚀 Installation / Setup
 
 ```bash
-# create a new project in the current directory
-npm create svelte@latest
+# Install dependencies:
+npm install
 
-# create a new project in my-app
-npm create svelte@latest my-app
+# run the project
+npm crun dev
 ```
 
-## Developing
+Features
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+📅 Timeline calendar view with configurable date ranges
+👥 Team member management with avatars and roles
+📋 Event creation, editing, and deletion
+🌐 Multi-language support (German, English, Spanish, French)
+📱 Responsive design with mobile-friendly interface
+🎨 Customizable display options
+⌨️ Keyboard navigation support
+🔍 Event filtering and highlightin
 
-```bash
-npm run dev
+⚙️ Available Props
+<Calendar />
+Prop	                Type	              Description
+persons	              Person[]	          List of personnel to be shown in rows
+events	              CalendarEvent[]	    List of events to render on the calendar
+calendarStartDate	    Date	              Start of the calendar range
+calendarEndDate	      Date	              End of the calendar range
+enableHighlight	      boolean	            Toggle for highlighting current day
+showWeekends	        boolean	            Show or hide weekends
+highlightWeekends	    boolean	            Highlight weekends with special styling
+goToTodayTrigger	    number	            Increment to trigger scroll to today
+scrollLeftTrigger	    number	            Increment to scroll calendar left
+scrollRightTrigger	  number	            Increment to scroll calendar right
+locale	              string	            Locale string (e.g., "en-US", "de-DE")
+selectedDate	        string | null	      Optionally preselect a date (format: "YYYY-MM-DD")
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
 
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
