@@ -3,7 +3,13 @@
     import Settings from '$lib/component/Settings.svelte';
     import { onMount } from 'svelte';
 
+    /**
+     * @typedef {import('./../lib/component/types.js').CalendarEvent} CalendarEvent
+     * @typedef {import('./../lib/component/types.js').Person} Person
+     */
+
     // Sample persons data
+    /** @type {Person[]} */
     let persons = [
         { id: 1, name: 'Max Mustermann', title: 'Projektmanager' },
         { id: 2, name: 'Erika Mustermann', title: 'Entwicklerin' },
@@ -20,6 +26,7 @@
     ];
 
     // Sample events data
+    /** @type {CalendarEvent[]} */
     let events = [
         { 
             id: 1, 
@@ -124,7 +131,7 @@
 
     // Calendar date range - new configurable dates
     let calendarStartDate = new Date(2025, 0, 1); // January 1, 2025
-    let calendarEndDate = new Date(2025, 11, 31); // December 31, 2025
+    let calendarEndDate = new Date(2025, 12, 31); // December 31, 2025
     
     // Start date for the calendar (kept for backward compatibility)
     const startDate = new Date(2025, 0, 1); // January 1, 2025
@@ -147,6 +154,7 @@
     let locale = 'en-US'; // Changed default to English
     
     // Language mapping for display
+    /** @type {Record<string, string>} */
     const languageNames = {
         'de-DE': 'Deutsch',
         'en-US': 'English', 
@@ -158,6 +166,7 @@
     let selectedDate = null;
 
     // Reference to Settings component to trigger event details popup
+    /** @type {any} */
     let settingsComponent;
 
     // Mobile menu state
@@ -179,15 +188,6 @@
         }
     }
 
-    onMount(() => {
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        
-        return () => {
-            window.removeEventListener('resize', checkMobile);
-        };
-    });
-
     function toggleMobileMenu() {
         mobileMenuOpen = !mobileMenuOpen;
     }
@@ -208,23 +208,48 @@
         scrollRightTrigger += 1;
     }
 
+    onMount(() => {
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => {
+            window.removeEventListener('resize', checkMobile);
+        };
+    });
+
+   
+
+
+
+    /**
+     * @param {CustomEvent} event
+     */
     function handleDateSelect(event) {
         const { date } = event.detail;
         console.log('Date selected:', date);
         // Add your custom logic here for when a date is selected
     }
 
+    /**
+     * @param {CustomEvent} event
+     */
     function handleDateUnselect(event) {
         const { date } = event.detail;
         console.log('Date unselected:', date);
         // Add your custom logic here for when a date is deselected
     }
 
+    /**
+     * @param {CustomEvent} event
+     */
     function handleAddEvent(event) {
         const newEvent = event.detail;
         events = [...events, newEvent];
     }
 
+    /**
+     * @param {CustomEvent} event
+     */
     function handleEventClick(event) {
         const clickedEvent = event.detail;
         console.log('Event clicked:', clickedEvent);
@@ -235,9 +260,22 @@
         }
     }
 
+    /**
+     * @param {CustomEvent} event
+     */
     function handleDeleteEvent(event) {
         const eventId = event.detail;
         events = events.filter(e => e.id !== eventId);
+    }
+
+
+    /**
+     * @param {KeyboardEvent} e
+     */
+    function handleMobileBackdropKeydown(e) {
+        if (e.key === 'Escape') {
+            closeMobileMenu();
+        }
     }
 </script>
 
@@ -300,16 +338,6 @@
                             <div class="text-sm text-slate-500">
                                 {languageNames[locale]}
                             </div>
-                            {#if selectedDate}
-                                <div class="text-sm text-blue-600 font-medium">
-                                    Selected: {new Intl.DateTimeFormat(locale, { 
-                                        weekday: 'short', 
-                                        year: 'numeric', 
-                                        month: 'short', 
-                                        day: 'numeric' 
-                                    }).format(new Date(selectedDate))}
-                                </div>
-                            {/if}
                         </div>
                         
                         <!-- Mobile hamburger button -->
@@ -382,7 +410,7 @@
             <div 
                 class="fixed inset-0 bg-black bg-opacity-50" 
                 on:click={closeMobileMenu}
-                on:keydown={(e) => e.key === 'Escape' && closeMobileMenu()}
+                on:keydown={handleMobileBackdropKeydown}
                 role="button"
                 tabindex="0"
                 aria-label="Close menu"
@@ -412,10 +440,8 @@
 </main>
 
 <footer class="absolute bottom-0 left-0 w-full text-center text-sm text-slate-500 ">
-        © 2025 mehdi. All rights reserved.
+        © 2025 Mahdi. All rights reserved.
 </footer>
-
-
 
 <style>
     main{

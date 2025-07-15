@@ -17,6 +17,8 @@
     let place = '';
     let category = 'project';
     let color = 'blue';
+
+    /** @type {number[]} */
     let selectedPersons = [];
     
     const categories = [
@@ -77,24 +79,39 @@
             place: place.trim(),
             category,
             color,
-            persons: selectedPersons.map(id => parseInt(id))
+            persons: selectedPersons
         };
         
         dispatch('addEvent', newEvent);
         closePopup();
     }
     
+
+    /**
+    * @param {number} personId
+    */
     function handlePersonToggle(personId) {
-        const id = personId.toString();
-        if (selectedPersons.includes(id)) {
-            selectedPersons = selectedPersons.filter(p => p !== id);
+        if (selectedPersons.includes(personId)) {
+            selectedPersons = selectedPersons.filter(id => id !== personId);
         } else {
-            selectedPersons = [...selectedPersons, id];
+            selectedPersons = [...selectedPersons, personId];
         }
     }
-    
+
+    /**
+     * @param {MouseEvent} event
+     */
     function handleBackdropClick(event) {
         if (event.target === event.currentTarget) {
+            closePopup();
+        }
+    }
+
+    /**
+     * @param {KeyboardEvent} event
+     */
+    function handleBackdropKeydown(event) {
+        if (event.key === 'Escape') {
             closePopup();
         }
     }
@@ -105,6 +122,7 @@
     <div 
         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
         on:click={handleBackdropClick}
+        on:keydown={handleBackdropKeydown}
         role="dialog"
         aria-modal="true"
     >
@@ -231,15 +249,15 @@
                     
                     <!-- Assigned Persons -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                        <div class="block text-sm font-medium text-slate-700 mb-2">
                             Assign Team Members
-                        </label>
+                        </div>
                         <div class="max-h-32 overflow-y-auto border border-slate-300 rounded-md p-2">
                             {#each persons as person}
                                 <label class="flex items-center p-2 hover:bg-slate-50 rounded cursor-pointer">
                                     <input 
                                         type="checkbox" 
-                                        checked={selectedPersons.includes(person.id.toString())}
+                                        checked={selectedPersons.includes(person.id)}
                                         on:change={() => handlePersonToggle(person.id)}
                                         class="h-4 w-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
                                     >

@@ -5,6 +5,12 @@
 
     const dispatch = createEventDispatcher();
 
+    /**
+     * @typedef {import('./types.js').CalendarEvent} CalendarEvent
+     * @typedef {import('./types.js').Person} Person
+     * @typedef {import('./types.js').ProcessedEvent} ProcessedEvent
+     */
+
     /** @type {Date} */
     export let startDate = new Date();
 
@@ -14,10 +20,10 @@
     /** @type {Date} */
     export let calendarEndDate = new Date();
 
-    /** @type {Array<{id: string|number, startDate: string, endDate: string, title: string, persons: Array<string|number>, description?: string, category?: string, color?: string, place?: string}>} */
+    /** @type {CalendarEvent[]} */
     export let events = [];
 
-    /** @type {Array<{id: string|number, name: string, title: string}>} */
+    /** @type {Person[]} */
     export let persons = [];
 
     /** @type {boolean} */
@@ -45,16 +51,27 @@
     export let highlightWeekends = false;
 
     /** @type {Object|null} */
-    export let selectedEvent = null;
+    export const selectedEvent = null;
 
     /** @type {boolean} */
     export let shortenPersonnelCol = false;
 
+    /** @type {Array<{name: string, date: string, iso: string, isToday: boolean, isWeekend: boolean}>} */
     let days = [];
+
+    /** @type {Array<{name: string, left: number, width: number}>} */
     let months = [];
+
+    /** @type {HTMLElement} */
     let headerRef;
+
+    /** @type {HTMLElement} */
     let namesRef;
+
+    /** @type {HTMLElement} */
     let gridRef;
+
+    /** @type {{dayIndex: number, personIndex: number}} */
     let hoveredCell = { dayIndex: -1, personIndex: -1 };
 
     // CSS custom properties for consistent sizing
@@ -64,6 +81,7 @@
     const namesWidthShort = 60; // Shortened width for mobile
     const dayWidth = 50;
 
+    
     $: processedEvents = calculateEvents(events, persons, showWeekends,calendarStartDate, calendarEndDate);
     $: visibleDays = showWeekends ? days : days.filter((day) => !day.isWeekend);
     $: visibleMonths = showWeekends ? months : calculateVisibleMonths();
@@ -89,8 +107,18 @@
         scrollRight();
     }
 
+
+    /**
+     * @param {CalendarEvent[]} events
+     * @param {Person[]} persons
+     * @param {boolean} showWeekends
+     * @param {Date} calendarStartDate
+     * @param {Date} calendarEndDate
+     * @returns {ProcessedEvent[]}
+     */
     function calculateEvents(events, persons, showWeekends, calendarStartDate, calendarEndDate) {
         // Process events to handle multiple persons - create separate event instance for each person
+        /** @type {ProcessedEvent[]} */
         const expandedEvents = [];
         
         // Get calendar date range for clamping
@@ -130,7 +158,7 @@
                         name: event.title,
                         color: event.color ? `bg-${event.color}-500` : "bg-blue-500",
                         originalEventId: event.id, // Keep reference to original event
-                        isMultiPerson: event.persons.length > 1,
+                        isMultiPerson: event.persons ? event.persons.length > 1 : false,
                         isClamped: eventStart !== event.startDate || eventEnd !== event.endDate,
                         clampedStart: eventStart !== event.startDate,
                         clampedEnd: eventEnd !== event.endDate
@@ -140,7 +168,7 @@
                 // Handle events without persons (fallback)
                 expandedEvents.push({
                     ...event,
-                    personId: null,
+                    personId: "",
                     start: eventStart,
                     end: eventEnd,
                     name: event.title,
@@ -160,7 +188,7 @@
     
     function calculateVisibleMonths() {
         if (showWeekends) return months;
-
+        /** @type {Array<{name: string, left: number, width: number}>} */
         const visibleMonthsArray = [];
         let currentLeft = 0;
 
@@ -225,7 +253,7 @@
                 if (monthStartDate < startOfRange) monthStartDate = new Date(startOfRange);
                 if (monthEndDate > endOfRange) monthEndDate = new Date(endOfRange);
                 
-                const daysToShow = Math.floor((monthEndDate - monthStartDate) / (1000 * 60 * 60 * 24)) + 1;
+                const daysToShow = Math.floor((monthEndDate.getTime() - monthStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                 
                 months.push({
                     name: `${dtfMonth.format(new Date(year, month, 1))} ${year}`,
@@ -250,9 +278,13 @@
         visibleDays = days;
     }
 
+    /**
+     * @param {Event} event
+     */
     function syncScroll(event) {
-        if (headerRef) headerRef.scrollLeft = event.target.scrollLeft;
-        if (namesRef) namesRef.scrollTop = event.target.scrollTop;
+        const target = /** @type {HTMLElement} */ (event.target);
+        if (headerRef) headerRef.scrollLeft = target.scrollLeft;
+        if (namesRef) namesRef.scrollTop = target.scrollTop;
     }
 
     function scrollToToday() {
@@ -290,6 +322,11 @@
         }
     }
 
+
+    /**
+     * @param {ProcessedEvent} event
+     * @param {boolean} showWeekends
+     */
     function getEventStyle(event, showWeekends) {
         const personIndex = persons.findIndex((p) => p.id === event.personId);
         const startIndex = visibleDays.findIndex((d) => d.iso === event.start);
@@ -323,18 +360,26 @@
         return `top: ${top}px; left: ${left}px; width: ${width}px; height: ${height}px;`;
     }
 
+    /**
+     * @param {number} dayIndex
+     * @param {number} personIndex
+     */
     function handleCellHover(dayIndex, personIndex) {
         if (highlight) {
             hoveredCell = { dayIndex, personIndex };
         }
     }
 
+    
     function handleCellLeave() {
         if (highlight) {
             hoveredCell = { dayIndex: -1, personIndex: -1 };
         }
     }
 
+    /**
+     * @param {string} dayIso
+     */
     function handleDateClick(dayIso) {
         if (selectedDate === dayIso) {
             // Deselect current date
@@ -355,6 +400,10 @@
         }
     }
 
+    /**
+     * @param {ProcessedEvent} event
+     * @param {MouseEvent} mouseEvent
+     */
     function handleEventClick(event, mouseEvent) {
         mouseEvent.stopPropagation();
         mouseEvent.preventDefault();
@@ -363,6 +412,17 @@
         const originalEvent = events.find(e => e.id === event.originalEventId);
         if (originalEvent) {
             dispatch('eventClick', originalEvent);
+        }
+    }
+
+    /**
+     * @param {KeyboardEvent} e
+     * @param {ProcessedEvent} event
+     */
+    function handleEventKeydown(e, event) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleEventClick(event, /** @type {MouseEvent} */ (/** @type {unknown} */ (e)));
         }
     }
 
@@ -541,7 +601,8 @@
                     on:click={(e) => handleEventClick(event, e)}
                     role="button"
                     tabindex="0"
-                    on:keydown={(e) => e.key === 'Enter' && handleEventClick(event, e)}
+                    on:keydown={(e) => handleEventKeydown(e, event)}
+                    aria-label="Event: {event.name}"
                 >
                     <div
                         class="h-full w-full rounded-md text-white text-xs flex items-center px-2 shadow-sm hover:shadow-md transition-all duration-200 {event.color} border border-white/20 hover:scale-105"

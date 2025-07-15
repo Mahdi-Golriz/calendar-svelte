@@ -4,11 +4,13 @@
     import AddEventPopup from './AddEventPopup.svelte';
     import ShowEventPopup from './ShowEventPopup.svelte';
     
-    /** @type {boolean} */
-    export let isMobile = false;
-    
     const dispatch = createEventDispatcher();
     
+    /**
+     *  @typedef {import('./types').CalendarEvent} CalendarEvent
+     */
+
+
     /** @type {boolean} */
     export let enableHighlight = true;
     
@@ -27,7 +29,7 @@
     /** @type {string|null} */
     export let selectedDate = null;
     
-    /** @type {Array<Object>} */
+    /** @type {CalendarEvent[]} */
     export let events = [];
     
     /** @type {boolean} */
@@ -38,6 +40,8 @@
     let showAddForm = false;
     let showEventPopup = false;
     let showEventDetailsPopup = false;
+
+    /** @type {CalendarEvent|null} */
     let selectedEventForDetails = null;
     
     const availableLanguages = [
@@ -71,7 +75,9 @@
             showAddForm = false;
         }
     }
-    
+    /**
+     * @param {CustomEvent} event
+     */
     function handleRemovePerson(event) {
         const personId = event.detail;
         persons = persons.filter(p => p.id !== personId);
@@ -88,7 +94,10 @@
     function clearSelectedDate() {
         selectedDate = null;
     }
-    
+
+    /**
+     * @param {string} isoDate
+     */
     function formatDateForDisplay(isoDate) {
         const date = new Date(isoDate);
         return new Intl.DateTimeFormat(locale, { 
@@ -99,16 +108,25 @@
         }).format(date);
     }
     
+    /**
+     * @param {CustomEvent} event
+     */
     function handleAddEvent(event) {
         const newEvent = event.detail;
         dispatch('addEvent', newEvent);
     }
     
+    /**
+     * @param {CustomEvent} event
+     */
     function handleShowEventDetails(event) {
         selectedEventForDetails = event.detail;
         showEventDetailsPopup = true;
     }
     
+    /**
+     * @param {CustomEvent} event
+     */
     function handleEditEvent(event) {
         // For now, just close the details popup
         // You could implement edit functionality here
@@ -116,6 +134,9 @@
         console.log('Edit event:', event.detail);
     }
     
+    /**
+     * @param {CustomEvent} event
+     */
     function handleDeleteEvent(event) {
         const eventId = event.detail;
         dispatch('deleteEvent', eventId);
@@ -130,30 +151,46 @@
         dispatch('closeMobile');
     }
 
+
+    /**
+     * @param {Date} date
+     */
     function formatDateForInput(date) {
         return date.toISOString().split('T')[0];
     }
     
+
+    /**
+     * @param {Event} event
+     */
     function handleStartDateChange(event) {
-        const newStartDate = new Date(event.target.value);
+        const target = /** @type {HTMLInputElement} */ (event.target);
+        const newStartDate = new Date(target.value);
         if (newStartDate <= calendarEndDate) {
             calendarStartDate = newStartDate;
         } else {
             // Reset input to current value if invalid
-            event.target.value = formatDateForInput(calendarStartDate);
+            target.value = formatDateForInput(calendarStartDate);
         }
     }
     
+    /**
+     * @param {Event} event
+     */
     function handleEndDateChange(event) {
-        const newEndDate = new Date(event.target.value);
+        const target = /** @type {HTMLInputElement} */ (event.target);
+        const newEndDate = new Date(target.value);
         if (newEndDate >= calendarStartDate) {
             calendarEndDate = newEndDate;
         } else {
             // Reset input to current value if invalid
-            event.target.value = formatDateForInput(calendarEndDate);
+            target.value = formatDateForInput(calendarEndDate);
         }
     }
     
+    /**
+     * @param {CalendarEvent} event
+     */
     // Public method to show event details (called from parent component)
     export function showEventDetails(event) {
         selectedEventForDetails = event;
@@ -202,10 +239,11 @@
                 
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">
+                        <label for="start-date" class="block text-xs font-medium text-slate-700 mb-1">
                             Start Date
                         </label>
                         <input 
+                            id="start-date" 
                             type="date" 
                             value={formatDateForInput(calendarStartDate)}
                             on:change={handleStartDateChange}
@@ -214,10 +252,11 @@
                     </div>
                     
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">
+                        <label class="block text-xs font-medium text-slate-700 mb-1" for="end-date">
                             End Date
                         </label>
-                        <input 
+                        <input
+                            id="end-date"
                             type="date" 
                             value={formatDateForInput(calendarEndDate)}
                             on:change={handleEndDateChange}
@@ -226,7 +265,7 @@
                     </div>
                     
                     <div class="text-xs text-slate-500">
-                        Duration: {Math.ceil((calendarEndDate - calendarStartDate) / (1000 * 60 * 60 * 24) + 1)} days
+                        Duration: {Math.ceil((calendarEndDate.getTime() - calendarStartDate.getTime()) / (1000 * 60 * 60 * 24) + 1)} days
                     </div>
                 </div>
             </div>
@@ -382,18 +421,6 @@
                             on:click={handleGoToToday}
                             class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
                             Go to today
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="border-t border-slate-100 pt-6">
-                    <h3 class="text-sm font-medium text-slate-900 mb-3">View Options</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button class="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
-                            Year
-                        </button>
-                        <button class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">
-                            Quarter
                         </button>
                     </div>
                 </div>

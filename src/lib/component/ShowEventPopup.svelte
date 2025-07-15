@@ -3,10 +3,15 @@
     
     const dispatch = createEventDispatcher();
     
+    /**
+     *  @typedef {import('./types').CalendarEvent} CalendarEvent
+     */
+
+
     /** @type {boolean} */
     export let isOpen = false;
     
-    /** @type {Object|null} */
+    /** @type {CalendarEvent|null} */
     export let event = null;
     
     /** @type {Array<{id: number, name: string, title: string}>} */
@@ -17,24 +22,35 @@
         event = null;
     }
     
-    function handleEdit() {
-        dispatch('editEvent', event);
-        closePopup();
-    }
     
     function handleDelete() {
-        if (confirm('Are you sure you want to delete this event?')) {
+        if (event && confirm('Are you sure you want to delete this event?')) {
             dispatch('deleteEvent', event.originalEventId || event.id);
             closePopup();
         }
     }
     
+    /**
+     * @param {MouseEvent} event
+     */
     function handleBackdropClick(event) {
         if (event.target === event.currentTarget) {
             closePopup();
         }
     }
+
+    /**
+     * @param {KeyboardEvent} event
+     */
+    function handleBackdropKeydown(event) {
+        if (event.key === 'Escape') {
+            closePopup();
+        }
+    }
     
+    /**
+     * @param {string} dateStr
+     */
     function formatDate(dateStr) {
         const date = new Date(dateStr);
         return new Intl.DateTimeFormat('en-US', { 
@@ -47,10 +63,15 @@
     
     function getAssignedPersons() {
         if (!event?.persons) return [];
-        return persons.filter(person => event.persons.includes(person.id));
+        return persons.filter(person => event?.persons?.includes(person.id) ?? false);
     }
     
+    /**
+     * @param {string} category
+     */
     function getCategoryLabel(category) {
+
+        /** @type {Record<string, string>} */
         const categories = {
             'vacation': 'Vacation',
             'conference': 'Conference',
@@ -64,7 +85,11 @@
         return categories[category] || category;
     }
     
+    /**
+     * @param {string} color
+     */
     function getColorName(color) {
+        /** @type {Record<string, string>} */
         const colors = {
             'blue': 'Blue',
             'green': 'Green',
@@ -85,6 +110,7 @@
     <div 
         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
         on:click={handleBackdropClick}
+        on:keydown={handleBackdropKeydown}
         role="dialog"
         aria-modal="true"
     >
@@ -114,13 +140,13 @@
                         <div>
                             <h3 class="text-sm font-medium text-slate-700 mb-2">Start Date</h3>
                             <div class="px-3 py-2 bg-slate-50 rounded-md text-sm text-slate-900">
-                                {formatDate(event.startDate || event.start)}
+                                {formatDate(event.startDate ?? event.start)}
                             </div>
                         </div>
                         <div>
                             <h3 class="text-sm font-medium text-slate-700 mb-2">End Date</h3>
                             <div class="px-3 py-2 bg-slate-50 rounded-md text-sm text-slate-900">
-                                {formatDate(event.endDate || event.end)}
+                                {formatDate(event.endDate ?? event.end)}
                             </div>
                         </div>
                     </div>
@@ -130,14 +156,14 @@
                         <div>
                             <h3 class="text-sm font-medium text-slate-700 mb-2">Category</h3>
                             <div class="px-3 py-2 bg-slate-50 rounded-md text-sm text-slate-900">
-                                {getCategoryLabel(event.category) || 'Not specified'}
+                                {getCategoryLabel(event.category ?? "") || 'Not specified'}
                             </div>
                         </div>
                         <div>
                             <h3 class="text-sm font-medium text-slate-700 mb-2">Color</h3>
                             <div class="flex items-center space-x-2">
                                 <div class="w-4 h-4 rounded {event.color || 'bg-blue-500'}"></div>
-                                <span class="text-sm text-slate-900">{getColorName(event.color) || 'Blue'}</span>
+                                <span class="text-sm text-slate-900">{getColorName(event.color ?? "") || 'Blue'}</span>
                             </div>
                         </div>
                     </div>
@@ -205,12 +231,6 @@
                         >
                             Close
                         </button>
-                        <!-- <button 
-                            on:click={handleEdit}
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                            Edit Event
-                        </button> -->
                     </div>
                 </div>
             </div>
